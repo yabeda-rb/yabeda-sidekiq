@@ -59,11 +59,11 @@ module Evil
       end
 
       class << self
-        def labelize(worker, _job, queue)
-          { queue: queue, worker: worker_class(worker) }
+        def labelize(worker, job, queue)
+          { queue: queue, worker: worker_class(worker, job) }
         end
 
-        def worker_class(worker)
+        def worker_class(worker, job)
           if defined?(ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper)
             return job["wrapped"] if worker.is_a?(ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper)
           end
