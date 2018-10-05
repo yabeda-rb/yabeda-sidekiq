@@ -58,6 +58,21 @@ module Evil
         end
       end
 
+      ::Sidekiq.configure_server do |config|
+        config.server_middleware do |chain|
+          chain.add ServerMiddleware
+        end
+        config.client_middleware do |chain|
+          chain.add ClientMiddleware
+        end
+      end
+
+      ::Sidekiq.configure_client do |config|
+        config.client_middleware do |chain|
+          chain.add ClientMiddleware
+        end
+      end
+
       class << self
         def labelize(worker, job, queue)
           { queue: queue, worker: worker_class(worker, job) }

@@ -1,44 +1,29 @@
 # Evil::Metrics::[Sidekiq]
 
-Built-in metrics for [Sidekiq] monitoring out of the box!
+Built-in metrics for [Sidekiq] monitoring out of the box! Part of the [evil-metrics] suite.
 
 ## Installation
 
- 1. Add this line to your application's Gemfile:
+```ruby
+gem 'evil-metrics-rails'
+# Then add monitoring system adapter, e.g.:
+# gem 'evil-metrics-prometheus'
+```
 
-    ```ruby
-    gem 'evil-metrics-rails'
-    # Then add monitoring system adapter, e.g.:
-    # gem 'evil-metrics-prometheus'
-    ```
+And then execute:
 
-    And then execute:
+    $ bundle
 
-        $ bundle
+**And that is it!** Sidekiq metrics are being collected!
 
+Additionally, depending on your adapter, you may want to setup metrics export. E.g. for [evil-metrics-prometheus]:
 
- 2. Add middlewares to your Sidekiq server and client:
-
-    ```ruby
-    # config/initializers/sidekiq or elsewhere
-    Sidekiq.configure_server do |config|
-      config.redis = your_redis_credentials
-      config.server_middleware do |chain|
-        chain.add Evil::Metrics::Sidekiq::ServerMiddleware
-      end
-      # Additional setup may be required depending on adapter. E.g. for prometheus:
-      # Evil::Metrics::Prometheus::Exporter.start_metrics_server!
-    end
-
-    Sidekiq.configure_client do |config|
-      config.redis = your_redis_credentials
-      config.client_middleware do |chain|
-        chain.add Evil::Metrics::Sidekiq::ClientMiddleware
-      end
-    end
-    ```
-
- 3. You're done!
+```ruby
+# config/initializers/sidekiq or elsewhere
+Sidekiq.configure_server do |_config|
+  Evil::Metrics::Prometheus::Exporter.start_metrics_server!
+end
+```
 
 ## Metrics
 
@@ -59,7 +44,7 @@ Built-in metrics for [Sidekiq] monitoring out of the box!
 
    It should be disabled by default as it requires to iterate over all jobs in sets and may be very slow on large sets.
 
- - Maybe hooks for ease of plugging in metrics for myriads of Sidekiq plugins?
+ - Maybe add some hooks for ease of plugging in metrics for myriads of Sidekiq plugins?
 
 ## Development
 
@@ -76,3 +61,5 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/evil-m
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
 
 [Sidekiq]: https://github.com/mperham/sidekiq/ "Simple, efficient background processing for Ruby"
+[evil-metrics]: https://github.com/evil-metrics/evil-metrics
+[evil-metrics-prometheus]: https://github.com/evil-metrics/evil-metrics-prometheus
