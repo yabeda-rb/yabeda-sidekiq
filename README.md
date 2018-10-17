@@ -1,13 +1,13 @@
-# Evil::Metrics::[Sidekiq]
+# Yabeda::[Sidekiq]
 
-Built-in metrics for [Sidekiq] monitoring out of the box! Part of the [evil-metrics] suite.
+Built-in metrics for [Sidekiq] monitoring out of the box! Part of the [yabeda] suite.
 
 ## Installation
 
 ```ruby
-gem 'evil-metrics-rails'
+gem 'yabeda-rails'
 # Then add monitoring system adapter, e.g.:
-# gem 'evil-metrics-prometheus'
+# gem 'yabeda-prometheus'
 ```
 
 And then execute:
@@ -16,12 +16,12 @@ And then execute:
 
 **And that is it!** Sidekiq metrics are being collected!
 
-Additionally, depending on your adapter, you may want to setup metrics export. E.g. for [evil-metrics-prometheus]:
+Additionally, depending on your adapter, you may want to setup metrics export. E.g. for [yabeda-prometheus]:
 
 ```ruby
 # config/initializers/sidekiq or elsewhere
 Sidekiq.configure_server do |_config|
-  Evil::Metrics::Prometheus::Exporter.start_metrics_server!
+  Yabeda::Prometheus::Exporter.start_metrics_server!
 end
 ```
 
@@ -54,12 +54,12 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/evil-metrics/evil-metrics-sidekiq.
+Bug reports and pull requests are welcome on GitHub at https://github.com/yabeda-rb/yabeda-sidekiq.
 
 ## License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
 
 [Sidekiq]: https://github.com/mperham/sidekiq/ "Simple, efficient background processing for Ruby"
-[evil-metrics]: https://github.com/evil-metrics/evil-metrics
-[evil-metrics-prometheus]: https://github.com/evil-metrics/evil-metrics-prometheus
+[yabeda]: https://github.com/yabeda-rb/yabeda
+[yabeda-prometheus]: https://github.com/yabeda-rb/yabeda-prometheus

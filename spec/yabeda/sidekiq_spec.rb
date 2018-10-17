@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-RSpec.describe Evil::Metrics::Sidekiq do
+RSpec.describe Yabeda::Sidekiq do
   it "has a version number" do
-    expect(Evil::Metrics::Sidekiq::VERSION).not_to be nil
+    expect(Yabeda::Sidekiq::VERSION).not_to be nil
   end
 
   it "does something useful" do
