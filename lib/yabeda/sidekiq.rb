@@ -3,6 +3,7 @@
 require "sidekiq"
 require "sidekiq/api"
 
+require "yabeda"
 require "yabeda/sidekiq/version"
 require "yabeda/sidekiq/client_middleware"
 require "yabeda/sidekiq/server_middleware"
