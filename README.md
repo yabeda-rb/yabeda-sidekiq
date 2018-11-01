@@ -5,7 +5,7 @@ Built-in metrics for [Sidekiq] monitoring out of the box! Part of the [yabeda] s
 ## Installation
 
 ```ruby
-gem 'yabeda-rails'
+gem 'yabeda-sidekiq'
 # Then add monitoring system adapter, e.g.:
 # gem 'yabeda-prometheus'
 ```
