@@ -31,7 +31,7 @@ module Yabeda
       gauge     :jobs_retry_count,     comment: "The number of failed jobs waiting to be retried"
       gauge     :jobs_dead_count,      comment: "The number of jobs exceeded their retry count."
       gauge     :active_processes,     comment: "The number of active Sidekiq worker processes."
-      gauge     :jobs_latency,         comment: "The job latency: the delay of the job start time in seconds"
+      gauge     :jobs_latency,         comment: "The job latency, the difference in seconds since the oldest job in the queue was enqueued"
 
       histogram :job_runtime, unit: :seconds, per: :job, comment: "A histogram of the job execution time.",
                               buckets: LONG_RUNNING_JOB_RUNTIME_BUCKETS
