@@ -31,6 +31,8 @@ module Yabeda
       gauge     :jobs_retry_count,     comment: "The number of failed jobs waiting to be retried"
       gauge     :jobs_dead_count,      comment: "The number of jobs exceeded their retry count."
       gauge     :active_processes,     comment: "The number of active Sidekiq worker processes."
+      gauge     :jobs_latency,         comment: "The job latency, the difference in seconds since the oldest job in the queue was enqueued"
+
       histogram :job_runtime, unit: :seconds, per: :job, comment: "A histogram of the job execution time.",
                               buckets: LONG_RUNNING_JOB_RUNTIME_BUCKETS
 
@@ -45,6 +47,10 @@ module Yabeda
         sidekiq_jobs_dead_count.set({}, stats.dead_size)
         sidekiq_active_processes.set({}, stats.processes_size)
         sidekiq_jobs_retry_count.set({}, stats.retry_size)
+
+        ::Sidekiq::Queue.all.each do |queue|
+          sidekiq_jobs_latency.set({ queue: queue.name }, queue.latency)
+        end
 
         # That is quite slow if your retry set is large
         # I don't want to enable it by default

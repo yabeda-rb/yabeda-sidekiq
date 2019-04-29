@@ -31,6 +31,7 @@ end
  - Number of jobs have been finished successfully: `sidekiq_jobs_success_total` (segmented by queue and class name)
  - Number of jobs have been failed: `sidekiq_jobs_failed_total` (segmented by queue and class name)
  - Time of job run: `sidekiq_job_runtime` (seconds per job execution, segmented by queue and class name)
+ - Time of the queue latency `sidekiq_jobs_latency` (the difference in seconds since the oldest job in the queue was enqueued)
  - Number of jobs in queues: `sidekiq_jobs_waiting_count` (segmented by queue)
  - Number of scheduled jobs:`sidekiq_jobs_scheduled_count`
  - Number of jobs in retry set: `sidekiq_jobs_retry_count`
