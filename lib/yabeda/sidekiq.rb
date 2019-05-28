@@ -21,7 +21,6 @@ module Yabeda
       counter :jobs_enqueued_total, comment: "A counter of the total number of jobs sidekiq enqueued."
 
       next unless ::Sidekiq.server?
-
       counter   :jobs_executed_total,  comment: "A counter of the total number of jobs sidekiq executed."
       counter   :jobs_success_total,   comment: "A counter of the total number of jobs successfully processed by sidekiq."
       counter   :jobs_failed_total,    comment: "A counter of the total number of jobs failed in sidekiq."
@@ -97,7 +96,7 @@ module Yabeda
       def process_memory_usage
         memories = Hash[%i{size resident shared trs lrs drs dt}.zip(open("/proc/#{Process.pid}/statm").read.split)]
         page_size = `getconf PAGESIZE`.chomp.to_i
-        memories[:resident] * page_size
+        memories[:resident].to_i * page_size
       end
     end
   end
