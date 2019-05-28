@@ -32,6 +32,7 @@ module Yabeda
       gauge     :jobs_dead_count,      comment: "The number of jobs exceeded their retry count."
       gauge     :active_processes,     comment: "The number of active Sidekiq worker processes."
       gauge     :jobs_latency,         comment: "The job latency, the difference in seconds since the oldest job in the queue was enqueued"
+      gauge     :memory_usage,         comment: "The sidekiq process overall memory usage"
 
       histogram :job_runtime, unit: :seconds, per: :job, comment: "A histogram of the job execution time.",
                               buckets: LONG_RUNNING_JOB_RUNTIME_BUCKETS
@@ -51,6 +52,8 @@ module Yabeda
         ::Sidekiq::Queue.all.each do |queue|
           sidekiq_jobs_latency.set({ queue: queue.name }, queue.latency)
         end
+
+        sidekiq_memory_usage = Yabeda::Sidekiq.process_memory_usage
 
         # That is quite slow if your retry set is large
         # I don't want to enable it by default
@@ -89,6 +92,12 @@ module Yabeda
           return job["wrapped"] if worker.is_a?(ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper)
         end
         (worker.is_a?(String) ? worker : worker.class).to_s
+      end
+
+      def process_memory_usage
+        memories = Hash[%i{size resident shared trs lrs drs dt}.zip(open("/proc/#{Process.pid}/statm").read.split)]
+        page_size = `getconf PAGESIZE`.chomp.to_i
+        memories[:resident] * page_size
       end
     end
   end
