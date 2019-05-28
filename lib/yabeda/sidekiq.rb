@@ -52,7 +52,7 @@ module Yabeda
           sidekiq_jobs_latency.set({ queue: queue.name }, queue.latency)
         end
 
-        sidekiq_memory_usage = Yabeda::Sidekiq.process_memory_usage
+        sidekiq_memory_usage.set({}, Yabeda::Sidekiq.process_memory_usage)
 
         # That is quite slow if your retry set is large
         # I don't want to enable it by default
