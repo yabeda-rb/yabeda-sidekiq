@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 
+## 0.1.4 - 2019-10-07
+
+### Added
+
+ - Require of core yabeda gem [#4](https://github.com/yabeda-rb/yabeda-sidekiq/pull/4). [@dsalahutdinov]
+
 ## 0.1.3 - 2018-10-25
 
 ### Fixed
@@ -27,3 +33,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## 0.1.0 - 2018-10-03
 
  - Initial release of evil-metrics-sidekiq gem. @Envek
+
+[@dsalahutdinov]: https://github.com/dsalahutdinov "Salahutdinov Dmitry"
