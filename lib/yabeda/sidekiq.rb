@@ -18,22 +18,25 @@ module Yabeda
     Yabeda.configure do
       group :sidekiq
 
-      counter :jobs_enqueued_total, comment: "A counter of the total number of jobs sidekiq enqueued."
+      counter :jobs_enqueued_total, tags: %i[queue worker], comment: "A counter of the total number of jobs sidekiq enqueued."
 
       next unless ::Sidekiq.server?
 
-      counter   :jobs_executed_total,  comment: "A counter of the total number of jobs sidekiq executed."
-      counter   :jobs_success_total,   comment: "A counter of the total number of jobs successfully processed by sidekiq."
-      counter   :jobs_failed_total,    comment: "A counter of the total number of jobs failed in sidekiq."
-      gauge     :jobs_waiting_count,   comment: "The number of jobs waiting to process in sidekiq."
-      gauge     :active_workers_count, comment: "The number of currently running machines with sidekiq workers."
-      gauge     :jobs_scheduled_count, comment: "The number of jobs scheduled for later execution."
-      gauge     :jobs_retry_count,     comment: "The number of failed jobs waiting to be retried"
-      gauge     :jobs_dead_count,      comment: "The number of jobs exceeded their retry count."
-      gauge     :active_processes,     comment: "The number of active Sidekiq worker processes."
-      gauge     :jobs_latency,         comment: "The job latency, the difference in seconds since the oldest job in the queue was enqueued"
+      counter   :jobs_executed_total,  tags: %i[queue worker], comment: "A counter of the total number of jobs sidekiq executed."
+      counter   :jobs_success_total,   tags: %i[queue worker], comment: "A counter of the total number of jobs successfully processed by sidekiq."
+      counter   :jobs_failed_total,    tags: %i[queue worker], comment: "A counter of the total number of jobs failed in sidekiq."
 
-      histogram :job_runtime, unit: :seconds, per: :job, comment: "A histogram of the job execution time.",
+      gauge     :jobs_waiting_count,   tags: %i[queue], comment: "The number of jobs waiting to process in sidekiq."
+      gauge     :active_workers_count, tags: [],        comment: "The number of currently running machines with sidekiq workers."
+      gauge     :jobs_scheduled_count, tags: [],        comment: "The number of jobs scheduled for later execution."
+      gauge     :jobs_retry_count,     tags: [],        comment: "The number of failed jobs waiting to be retried"
+      gauge     :jobs_dead_count,      tags: [],        comment: "The number of jobs exceeded their retry count."
+      gauge     :active_processes,     tags: [],        comment: "The number of active Sidekiq worker processes."
+      gauge     :jobs_latency,         tags: %i[queue], comment: "The job latency, the difference in seconds since the oldest job in the queue was enqueued"
+
+      histogram :job_runtime, comment: "A histogram of the job execution time.",
+                              unit: :seconds, per: :job,
+                              tags: %i[queue worker],
                               buckets: LONG_RUNNING_JOB_RUNTIME_BUCKETS
 
       collect do
