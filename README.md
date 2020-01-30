@@ -2,6 +2,8 @@
 
 Built-in metrics for [Sidekiq] monitoring out of the box! Part of the [yabeda] suite.
 
+Sample Grafana dashboard ID: [11667](https://grafana.com/grafana/dashboards/11667)
+
 ## Installation
 
 ```ruby
