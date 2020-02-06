@@ -53,7 +53,7 @@ module Yabeda
         sidekiq_jobs_retry_count.set({}, stats.retry_size)
 
         ::Sidekiq::Queue.all.each do |queue|
-          sidekiq_jobs_latency.set({ queue: queue.name }, queue.latency)
+          sidekiq_queue_latency.set({ queue: queue.name }, queue.latency)
         end
 
         # That is quite slow if your retry set is large
