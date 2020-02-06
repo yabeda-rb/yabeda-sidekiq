@@ -26,7 +26,6 @@ module Yabeda
       counter   :jobs_success_total,   tags: %i[queue worker], comment: "A counter of the total number of jobs successfully processed by sidekiq."
       counter   :jobs_failed_total,    tags: %i[queue worker], comment: "A counter of the total number of jobs failed in sidekiq."
 
-      gauge     :job_latency,          tags: %i[queue worker], comment: "The job latency, the difference in seconds between enqueued and running time"
       gauge     :jobs_waiting_count,   tags: %i[queue], comment: "The number of jobs waiting to process in sidekiq."
       gauge     :active_workers_count, tags: [],        comment: "The number of currently running machines with sidekiq workers."
       gauge     :jobs_scheduled_count, tags: [],        comment: "The number of jobs scheduled for later execution."
@@ -35,6 +34,10 @@ module Yabeda
       gauge     :active_processes,     tags: [],        comment: "The number of active Sidekiq worker processes."
       gauge     :queue_latency,        tags: %i[queue], comment: "The queue latency, the difference in seconds since the oldest job in the queue was enqueued"
 
+      histogram :job_latency, comment: "The job latency, the difference in seconds between enqueued and running time",
+                              unit: :seconds, per: :job,
+                              tags: %i[queue worker],
+                              buckets: LONG_RUNNING_JOB_RUNTIME_BUCKETS
       histogram :job_runtime, comment: "A histogram of the job execution time.",
                               unit: :seconds, per: :job,
                               tags: %i[queue worker],
