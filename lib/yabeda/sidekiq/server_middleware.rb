@@ -8,6 +8,8 @@ module Yabeda
         labels = Yabeda::Sidekiq.labelize(worker, job, queue)
         start = Time.now
         begin
+          job_instance = ::Sidekiq::Job.new(job)
+          Yabeda.sidekiq_job_latency.measure(labels, job_instance.latency)
           yield
           Yabeda.sidekiq_jobs_success_total.increment(labels)
         rescue Exception # rubocop: disable Lint/RescueException
