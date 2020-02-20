@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.5.0 - 2020-02-20
+
+### Added
+
+ - New `sidekiq_job_latency` histogram to track latency statistics of different job classes. [#9](https://github.com/yabeda-rb/yabeda-sidekiq/pull/9) by [@asusikov]
+
+### Changed
+
+ - **BREAKING CHANGE!** Renamed `sidekiq_jobs_latency` gauge to `sidekiq_queue_latency` to better describe its purpose and differentiate with the new histogram. [#9](https://github.com/yabeda-rb/yabeda-sidekiq/pull/9) by [@asusikov]
+
 ## 0.2.0 - 2020-01-14
 
 ### Changed
@@ -40,3 +50,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - Initial release of evil-metrics-sidekiq gem. @Envek
 
 [@dsalahutdinov]: https://github.com/dsalahutdinov "Salahutdinov Dmitry"
+[@asusikov]: https://github.com/asusikov "Alexander Susikov"
