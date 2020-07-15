@@ -42,6 +42,29 @@ end
  - Active workers count: `sidekiq_active_processes`
  - Active processes count: `sidekiq_active_workers_count`
 
+## Custom tags
+
+You can add additional tags to these metrics by declaring `yabeda_tags` method in your worker.
+
+```ruby
+# This block is optional but some adapters (like Prometheus) requires that all tags should be declared in advance
+Yabeda.configure do
+  default_tag :importance, nil
+end
+
+class MyWorker
+  include Sidekiq::Worker
+
+  def yabeda_tags(*params) # This method will be called first, before +perform+
+    { importance: extract_importance(params) }
+  end
+
+  def perform(*params)
+    # Your logic here
+  end
+end
+```
+
 # Roadmap (TODO or Help wanted)
 
  - Implement optional segmentation of retry/schedule/dead sets

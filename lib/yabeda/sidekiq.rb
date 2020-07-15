@@ -88,7 +88,7 @@ module Yabeda
 
     class << self
       def labelize(worker, job, queue)
-        { queue: queue, worker: worker_class(worker, job) }
+        { queue: queue, worker: worker_class(worker, job), **custom_tags(worker, job).to_h }
       end
 
       def worker_class(worker, job)
@@ -96,6 +96,12 @@ module Yabeda
           return job["wrapped"] if worker.is_a?(ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper)
         end
         (worker.is_a?(String) ? worker : worker.class).to_s
+      end
+
+      def custom_tags(worker, job)
+        return {} unless worker.respond_to?(:yabeda_tags)
+
+        worker.method(:yabeda_tags).arity.zero? ? worker.yabeda_tags : worker.yabeda_tags(*job["args"])
       end
     end
   end
