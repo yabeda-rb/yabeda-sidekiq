@@ -41,6 +41,7 @@ end
  - Number of jobs in dead set (“morgue”): `sidekiq_jobs_dead_count`
  - Active workers count: `sidekiq_active_processes`
  - Active processes count: `sidekiq_active_workers_count`
+ - Runtime of the actual running worker jobs `sidekiq_worker_runtime`
 
 ## Custom tags
 
