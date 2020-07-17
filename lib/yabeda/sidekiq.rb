@@ -33,7 +33,7 @@ module Yabeda
       gauge     :jobs_dead_count,      tags: [],        comment: "The number of jobs exceeded their retry count."
       gauge     :active_processes,     tags: [],        comment: "The number of active Sidekiq worker processes."
       gauge     :queue_latency,        tags: %i[queue], comment: "The queue latency, the difference in seconds since the oldest job in the queue was enqueued"
-      gauge     :worker_runtime,       tags: %i[queue worker jid], comment: "The actual worker job runtime"
+      gauge     :worker_runtime,       tags: %i[queue worker], comment: "The actual worker job runtime"
 
       histogram :job_latency, comment: "The job latency, the difference in seconds between enqueued and running time",
                               unit: :seconds, per: :job,
@@ -65,7 +65,7 @@ module Yabeda
           payload = msg['payload']
 
           sidekiq_worker_runtime.set(
-            {queue: payload['queue'], worker: payload['class'], jid: payload['jid']},
+            {queue: payload['queue'], worker: payload['class']},
             now - Time.at(msg['run_at'])
           )
         end
