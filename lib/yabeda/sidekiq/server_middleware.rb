@@ -6,7 +6,7 @@ module Yabeda
     class ServerMiddleware
       def call(worker, job, queue)
         labels = Yabeda::Sidekiq.labelize(worker, job, queue)
-        start = Time.now
+        start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         begin
           job_instance = ::Sidekiq::Job.new(job)
           Yabeda.sidekiq_job_latency.measure(labels, job_instance.latency)
@@ -24,7 +24,7 @@ module Yabeda
       private
 
       def elapsed(start)
-        (Time.now - start).round(3)
+        (Process.clock_gettime(Process::CLOCK_MONOTONIC) - start).round(3)
       end
     end
   end
