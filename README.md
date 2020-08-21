@@ -16,6 +16,14 @@ And then execute:
 
     $ bundle
 
+If you're not on Rails then configure Yabeda after your application was initialized:
+
+```ruby
+Yabeda.configure!
+```
+
+_If you're using Ruby on Rails then Yabeda will configure itself automatically!_
+
 **And that is it!** Sidekiq metrics are being collected!
 
 Additionally, depending on your adapter, you may want to setup metrics export. E.g. for [yabeda-prometheus]:
