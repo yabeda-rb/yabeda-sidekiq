@@ -12,7 +12,7 @@ module Yabeda
   module Sidekiq
     LONG_RUNNING_JOB_RUNTIME_BUCKETS = [
       0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, # standard (from Prometheus)
-      30, 60, 120, 300, 1800, 3600, 21_600 # Sidekiq tasks may be very long-running
+      30, 60, 120, 300, 1800, 3600, 21_600, # Sidekiq tasks may be very long-running
     ].freeze
 
     Yabeda.configure do
@@ -93,9 +93,11 @@ module Yabeda
 
       def worker_class(worker, job)
         if defined?(ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper)
-          return job["wrapped"] if worker.is_a?(ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper)
+          if worker.is_a?(ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper) || worker == ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper
+            return job["wrapped"].to_s
+          end
         end
-        (worker.is_a?(String) ? worker : worker.class).to_s
+        (worker.is_a?(String) || worker.is_a?(Class) ? worker : worker.class).to_s
       end
 
       def custom_tags(worker, job)
