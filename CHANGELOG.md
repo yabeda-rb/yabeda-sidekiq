@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.7.0 - 2020-07-15
+
+### Changed
+
+ - Tags from `yabeda_tags` method are applied to all metrics collected inside a job, not only sidekiq-specific. See [#14](https://github.com/yabeda-rb/yabeda-sidekiq/issues/14). @Envek
+
 ## 0.6.0 - 2020-07-15
 
 ### Added

@@ -9,6 +9,7 @@ require "active_job"
 require "active_job/queue_adapters/sidekiq_adapter"
 require "pry"
 
+require_relative "support/custom_metrics"
 require_relative "support/jobs"
 require_relative "support/sidekiq_inline_middlewares"
 

@@ -97,4 +97,26 @@ RSpec.describe Yabeda::Sidekiq do
       )
     end
   end
+
+  describe "#yabeda_tags worker method" do
+    it "uses custom labels for both sidekiq and application metrics" do
+      Yabeda.sidekiq.jobs_executed_total.values.clear   # This is a hack
+      Yabeda.sidekiq.job_runtime.values.clear           # This is a hack also
+      Yabeda.test.whatever.values.clear                 # And this
+
+      Sidekiq::Testing.inline! do
+        SampleComplexJob.perform_async
+      end
+
+      expect(Yabeda.sidekiq.jobs_executed_total.values).to eq(
+        { queue: "default", worker: "SampleComplexJob", implicit: true } => 1,
+      )
+      expect(Yabeda.sidekiq.job_runtime.values).to include(
+        { queue: "default", worker: "SampleComplexJob", implicit: true } => kind_of(Numeric),
+      )
+      expect(Yabeda.test.whatever.values).to include(
+        { explicit: true, implicit: true } => 1,
+      )
+    end
+  end
 end

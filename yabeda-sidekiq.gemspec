@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "sidekiq"
-  spec.add_dependency "yabeda", "~> 0.2"
+  spec.add_dependency "yabeda", "~> 0.6"
 
   spec.add_development_dependency "activejob", ">= 6.0"
   spec.add_development_dependency "bundler", "~> 2.0"

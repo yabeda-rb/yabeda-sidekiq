@@ -88,7 +88,7 @@ module Yabeda
 
     class << self
       def labelize(worker, job, queue)
-        { queue: queue, worker: worker_class(worker, job), **custom_tags(worker, job).to_h }
+        { queue: queue, worker: worker_class(worker, job) }
       end
 
       def worker_class(worker, job)

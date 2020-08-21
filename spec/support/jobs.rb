@@ -8,6 +8,19 @@ class SamplePlainJob
   end
 end
 
+class SampleComplexJob
+  include Sidekiq::Worker
+
+  def perform(*_args)
+    Yabeda.test.whatever.increment({ explicit: true })
+    "My job is complex"
+  end
+
+  def yabeda_tags
+    { implicit: true }
+  end
+end
+
 class FailingPlainJob
   include Sidekiq::Worker
 
