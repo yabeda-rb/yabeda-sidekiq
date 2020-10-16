@@ -33,7 +33,7 @@ module Yabeda
       gauge     :jobs_dead_count,      tags: [],        comment: "The number of jobs exceeded their retry count."
       gauge     :active_processes,     tags: [],        comment: "The number of active Sidekiq worker processes."
       gauge     :queue_latency,        tags: %i[queue], comment: "The queue latency, the difference in seconds since the oldest job in the queue was enqueued"
-      gauge     :worker_runtime,       tags: %i[queue worker], comment: "The actual worker job runtime"
+      gauge     :job_max_runtime,    tags: %i[queue worker], comment: "The actual job runtime"
 
       histogram :job_latency, comment: "The job latency, the difference in seconds between enqueued and running time",
                               unit: :seconds, per: :job,
@@ -60,16 +60,7 @@ module Yabeda
           sidekiq_queue_latency.set({ queue: queue.name }, queue.latency)
         end
 
-        now = Time.zone.now
-        ::Sidekiq::Workers.new.each do |process, thread, msg|
-          payload = msg['payload']
-
-          sidekiq_worker_runtime.set(
-            {queue: payload['queue'], worker: payload['class']},
-            now - Time.at(msg['run_at'])
-          )
-        end
-
+        track_job_max_runtime
         # That is quite slow if your retry set is large
         # I don't want to enable it by default
         # retries_by_queues =
@@ -98,6 +89,8 @@ module Yabeda
     end
 
     class << self
+      att_accessor :job_tags
+
       def labelize(worker, job, queue)
         { queue: queue, worker: worker_class(worker, job), **custom_tags(worker, job).to_h }
       end
@@ -113,6 +106,24 @@ module Yabeda
         return {} unless worker.respond_to?(:yabeda_tags)
 
         worker.method(:yabeda_tags).arity.zero? ? worker.yabeda_tags : worker.yabeda_tags(*job["args"])
+      end
+    end
+
+    self.job_tags = []
+
+    def track_job_max_runtime
+      now = Time.now.utc
+      workers_runtime = ::Sidekiq::Workers.new.each_with_object do |result, (process, thread, msg)|
+        payload = msg['payload']
+        tags = {queue: payload['queue'], worker: payload['class']}
+        job_tags << tags unless job_tags.include?(tags)
+
+        duration = now - Time.at(msg['run_at'])
+        result[tags] = duration if !result[tags] || result[tags] < duration
+      end
+
+      job_tags.each_with_object({}).each do |result, tags|
+        job_max_runtime.set(tags, workers_runtime[tags].to_i)
       end
     end
   end
