@@ -89,7 +89,7 @@ module Yabeda
     end
 
     class << self
-      attr_accessor :previous_max_job_runtimes
+      attr_accessor :observed_max_job_runtimes
 
       def labelize(worker, job, queue)
         { queue: queue, worker: worker_class(worker, job) }
@@ -111,31 +111,24 @@ module Yabeda
       end
     end
 
-    self.previous_max_job_runtimes = Set.new
+    self.observed_max_job_runtimes = Concurrent::Set.new
 
     # rubocop: disable Metrics/AbcSize
     def self.track_max_job_runtime
       now = Time.now.utc
-      job_runtimes = ::Sidekiq::Workers.new.each_with_object({}) do |(_process, _thread, msg), result|
+      current_max_job_runtimes = ::Sidekiq::Workers.new.each_with_object({}) do |(_process, _thread, msg), result|
         payload = msg["payload"]
         tags = { queue: payload["queue"], worker: payload["wrapped"] || payload["class"] }
+        observed_max_job_runtimes << tags
 
         duration = now - Time.at(msg["run_at"])
         result[tags] = duration if !result[tags] || result[tags] < duration
       end
 
-      job_runtimes.each do |tags, duration|
+      observed_max_job_runtimes.each do |tags|
+        duration = current_max_job_runtimes[tags].to_i # will set not currently observed jobs duration to zero
         Yabeda.sidekiq.job_max_runtime.set(tags, duration)
       end
-
-      # Reset durations to zero for finished jobs we saw earlier
-      previous_max_job_runtimes.subtract(job_runtimes.keys)
-      previous_max_job_runtimes.each do |tags|
-        Yabeda.sidekiq.job_max_runtime.set(tags, 0)
-      end
-
-      # Populate previous runtimes for the next time
-      self.previous_max_job_runtimes = Set.new(job_runtimes.keys)
     end
     # rubocop: enable Metrics/AbcSize
   end
