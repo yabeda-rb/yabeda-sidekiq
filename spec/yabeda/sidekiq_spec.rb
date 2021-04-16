@@ -119,4 +119,53 @@ RSpec.describe Yabeda::Sidekiq do
       )
     end
   end
+
+  describe "collection of Sidekiq statistics" do
+    before do
+      allow(Sidekiq::Stats).to receive(:new).and_return(
+        OpenStruct.new(
+          processes_size: 1,
+          workers_size: 10,
+          retry_size: 1,
+          scheduled_size: 2,
+          dead_size: 3,
+          processed: 42,
+          failed: 13,
+          queues: { "default" => 5, "mailers" => 4 },
+        ),
+      )
+      allow(Sidekiq::Queue).to receive(:all).and_return(
+        [
+          OpenStruct.new({ name: "default", latency: 0.5 }),
+          OpenStruct.new({ name: "mailers", latency: 0 }),
+        ],
+      )
+    end
+
+    it "collects queue latencies" do
+      Yabeda.collectors.each(&:call)
+
+      expect(Yabeda.sidekiq.queue_latency.values).to include(
+        { queue: "default" } => 0.5,
+        { queue: "mailers" } => 0.0,
+      )
+    end
+
+    it "collects queue sizes" do
+      Yabeda.collectors.each(&:call)
+
+      expect(Yabeda.sidekiq.jobs_waiting_count.values).to include(
+        { queue: "default" } => 5,
+        { queue: "mailers" } => 4,
+      )
+    end
+
+    it "collects named queues stats", :aggregate_failures do
+      Yabeda.collectors.each(&:call)
+
+      expect(Yabeda.sidekiq.jobs_retry_count.values).to eq({ {} => 1 })
+      expect(Yabeda.sidekiq.jobs_dead_count.values).to eq({ {} => 3 })
+      expect(Yabeda.sidekiq.jobs_scheduled_count.values).to eq({ {} => 2 })
+    end
+  end
 end
