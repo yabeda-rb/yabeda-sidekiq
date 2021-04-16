@@ -54,6 +54,33 @@ RSpec.describe Yabeda::Sidekiq do
         { queue: "default", worker: "FailingPlainJob" } => kind_of(Numeric),
       )
     end
+
+    it "measures maximum runtime" do
+      allow(Sidekiq::Workers).to receive(:new) do
+        [
+          [
+            "server:pid:wtf", "tid1", {
+              "queue" => "default",
+              "payload" => { "queue" => "default", "class" => "SamplePlainJob" },
+              "run_at" => Time.now.to_i,
+            },
+          ],
+          [
+            "server:pid:wtf", "tid2", {
+              "queue" => "default",
+              "payload" => { "queue" => "default", "class" => "SamplePlainJob" },
+              "run_at" => Time.now.to_i - 5,
+            },
+          ],
+        ]
+      end
+
+      Yabeda.collectors.each(&:call)
+
+      expect(Yabeda.sidekiq.job_max_runtime.values).to include(
+        { queue: "default", worker: "SamplePlainJob" } => (be >= 5),
+      )
+    end
   end
 
   describe "ActiveJob jobs" do
@@ -94,6 +121,30 @@ RSpec.describe Yabeda::Sidekiq do
       expect(Yabeda.sidekiq.job_runtime.values).to include(
         { queue: "default", worker: "SampleActiveJob" } => kind_of(Numeric),
         { queue: "default", worker: "FailingActiveJob" } => kind_of(Numeric),
+      )
+    end
+
+    it "measures maximum runtime" do
+      allow(Sidekiq::Workers).to receive(:new) do
+        [
+          [
+            "server:pid:wtf", "tid1", {
+              "queue" => "default",
+              "payload" => {
+                "queue" => "default",
+                "class" => "ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper",
+                "wrapped" => "SamplePlainJob",
+              },
+              "run_at" => Time.now.to_i - 42,
+            },
+          ],
+        ]
+      end
+
+      Yabeda.collectors.each(&:call)
+
+      expect(Yabeda.sidekiq.job_max_runtime.values).to include(
+        { queue: "default", worker: "SamplePlainJob" } => (be >= 42),
       )
     end
   end

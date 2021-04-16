@@ -60,7 +60,7 @@ module Yabeda
           sidekiq_queue_latency.set({ queue: queue.name }, queue.latency)
         end
 
-        Yabeda::Sidekiq.track_job_max_runtime
+        Yabeda::Sidekiq.track_max_job_runtime
         # That is quite slow if your retry set is large
         # I don't want to enable it by default
         # retries_by_queues =
@@ -89,7 +89,7 @@ module Yabeda
     end
 
     class << self
-      attr_accessor :job_tags
+      attr_accessor :previous_max_job_runtimes
 
       def labelize(worker, job, queue)
         { queue: queue, worker: worker_class(worker, job) }
@@ -111,23 +111,31 @@ module Yabeda
       end
     end
 
-    self.job_tags = []
+    self.previous_max_job_runtimes = Set.new
 
     # rubocop: disable Metrics/AbcSize
-    def self.track_job_max_runtime
+    def self.track_max_job_runtime
       now = Time.now.utc
-      workers_runtime = ::Sidekiq::Workers.new.each_with_object({}) do |result, (_process, _thread, msg)|
+      job_runtimes = ::Sidekiq::Workers.new.each_with_object({}) do |(_process, _thread, msg), result|
         payload = msg["payload"]
-        tags = { queue: payload["queue"], worker: payload["class"] }
-        job_tags << tags unless job_tags.include?(tags)
+        tags = { queue: payload["queue"], worker: payload["wrapped"] || payload["class"] }
 
         duration = now - Time.at(msg["run_at"])
         result[tags] = duration if !result[tags] || result[tags] < duration
       end
 
-      job_tags.each_with_object({}).each do |_result, tags|
-        job_max_runtime.set(tags, workers_runtime[tags].to_i)
+      job_runtimes.each do |tags, duration|
+        Yabeda.sidekiq.job_max_runtime.set(tags, duration)
       end
+
+      # Reset durations to zero for finished jobs we saw earlier
+      previous_max_job_runtimes.subtract(job_runtimes.keys)
+      previous_max_job_runtimes.each do |tags|
+        Yabeda.sidekiq.job_max_runtime.set(tags, 0)
+      end
+
+      # Populate previous runtimes for the next time
+      self.previous_max_job_runtimes = Set.new(job_runtimes.keys)
     end
     # rubocop: enable Metrics/AbcSize
   end
