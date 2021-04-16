@@ -16,6 +16,14 @@ And then execute:
 
     $ bundle
 
+If you're not on Rails then configure Yabeda after your application was initialized:
+
+```ruby
+Yabeda.configure!
+```
+
+_If you're using Ruby on Rails then Yabeda will configure itself automatically!_
+
 **And that is it!** Sidekiq metrics are being collected!
 
 Additionally, depending on your adapter, you may want to setup metrics export. E.g. for [yabeda-prometheus]:
@@ -83,6 +91,38 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/yabeda-rb/yabeda-sidekiq.
+
+### Releasing
+
+1. Bump version number in `lib/yabeda/sidekiq/version.rb`
+
+   In case of pre-releases keep in mind [rubygems/rubygems#3086](https://github.com/rubygems/rubygems/issues/3086) and check version with command like `Gem::Version.new(Yabeda::Sidekiq::VERSION).to_s`
+
+2. Fill `CHANGELOG.md` with missing changes, add header with version and date.
+
+3. Make a commit:
+
+   ```sh
+   git add lib/yabeda/sidekiq/version.rb CHANGELOG.md
+   version=$(ruby -r ./lib/yabeda/sidekiq/version.rb -e "puts Gem::Version.new(Yabeda::Sidekiq::VERSION)")
+   git commit --message="${version}: " --edit
+   ```
+
+4. Create annotated tag:
+
+   ```sh
+   git tag v${version} --annotate --message="${version}: " --edit --sign
+   ```
+
+5. Fill version name into subject line and (optionally) some description (list of changes will be taken from changelog and appended automatically)
+
+6. Push it:
+
+   ```sh
+   git push --follow-tags
+   ```
+
+7. GitHub Actions will create a new release, build and push gem into RubyGems! You're done!
 
 ## License
 

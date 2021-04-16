@@ -1,17 +1,18 @@
 ---
 require:
-- rubocop-rspec
+  - rubocop-rspec
 
 AllCops:
   TargetRubyVersion: 2.3
 
 Metrics/BlockLength:
+  Enabled: false
   Exclude:
   - "Gemfile"
   - "spec/**/*"
 
-Style/BracesAroundHashParameters:
-  EnforcedStyle: context_dependent
+Layout/LineLength:
+  Max: 160
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes
@@ -44,3 +45,23 @@ Style/TrailingCommaInHashLiteral:
   Enabled: true
   EnforcedStyleForMultiline: consistent_comma
 
+Style/HashEachMethods:
+  Enabled: true
+
+Style/HashTransformKeys:
+  Enabled: true
+
+Style/HashTransformValues:
+  Enabled: true
+
+RSpec/ExampleLength:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
+
+Metrics/MethodLength:
+  Max: 15
+
+Metrics/AbcSize:
+  Max: 17

@@ -4,13 +4,17 @@ module Yabeda
   module Sidekiq
     # Sidekiq worker middleware
     class ServerMiddleware
+      # rubocop: disable Metrics/AbcSize, Metrics/MethodLength:
       def call(worker, job, queue)
-        labels = Yabeda::Sidekiq.labelize(worker, job, queue)
-        start = Time.now
+        custom_tags = Yabeda::Sidekiq.custom_tags(worker, job).to_h
+        labels = Yabeda::Sidekiq.labelize(worker, job, queue).merge(custom_tags)
+        start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         begin
           job_instance = ::Sidekiq::Job.new(job)
           Yabeda.sidekiq_job_latency.measure(labels, job_instance.latency)
-          yield
+          Yabeda.with_tags(**custom_tags) do
+            yield
+          end
           Yabeda.sidekiq_jobs_success_total.increment(labels)
         rescue Exception # rubocop: disable Lint/RescueException
           Yabeda.sidekiq_jobs_failed_total.increment(labels)
@@ -20,11 +24,12 @@ module Yabeda
           Yabeda.sidekiq_jobs_executed_total.increment(labels)
         end
       end
+      # rubocop: enable Metrics/AbcSize, Metrics/MethodLength:
 
       private
 
       def elapsed(start)
-        (Time.now - start).round(3)
+        (Process.clock_gettime(Process::CLOCK_MONOTONIC) - start).round(3)
       end
     end
   end
