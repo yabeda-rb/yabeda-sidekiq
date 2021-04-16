@@ -3,7 +3,7 @@
 RSpec.describe Yabeda::Sidekiq do
   before do
     allow(Sidekiq::Stats).to receive(:new).and_return(
-      OpenStruct.new({
+      OpenStruct.new(
         workers_size: 0,
         scheduled_size: 0,
         dead_size: 0,
@@ -12,11 +12,13 @@ RSpec.describe Yabeda::Sidekiq do
         processed: 0,
         failed: 0,
         queues: { "default" => 0 },
-      })
+      ),
     )
-    allow(Sidekiq::Queue).to receive(:all).and_return([
-      OpenStruct.new({ name: "default", latency: 0 }),
-    ])
+    allow(Sidekiq::Queue).to receive(:all).and_return(
+      [
+        OpenStruct.new({ name: "default", latency: 0 }),
+      ],
+    )
   end
 
   it "has a version number" do
