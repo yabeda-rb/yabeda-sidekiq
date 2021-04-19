@@ -175,15 +175,15 @@ RSpec.describe Yabeda::Sidekiq do
       Sidekiq::Testing.inline! do
         workers = []
         workers.push(Thread.new { SampleLongRunningJob.perform_async })
-        sleep 0.01
+        sleep 0.012 # Ruby can sleep less than requested
         workers.push(Thread.new { SampleLongRunningJob.perform_async })
 
         Yabeda.collectors.each(&:call)
         expect(Yabeda.sidekiq.running_job_runtime.values).to include(
-          { queue: "default", worker: "SampleLongRunningJob" } => (be >= 0.01),
+          { queue: "default", worker: "SampleLongRunningJob" } => (be >= 0.010),
         )
 
-        sleep 0.01
+        sleep 0.012 # Ruby can sleep less than requested
         begin
           FailingActiveJob.perform_later
         rescue StandardError
@@ -192,7 +192,7 @@ RSpec.describe Yabeda::Sidekiq do
         Yabeda.collectors.each(&:call)
 
         expect(Yabeda.sidekiq.running_job_runtime.values).to include(
-          { queue: "default", worker: "SampleLongRunningJob" } => (be >= 0.02),
+          { queue: "default", worker: "SampleLongRunningJob" } => (be >= 0.020),
           { queue: "default", worker: "FailingActiveJob" } => 0,
         )
 
