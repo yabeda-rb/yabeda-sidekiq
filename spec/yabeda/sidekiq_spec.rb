@@ -170,7 +170,7 @@ RSpec.describe Yabeda::Sidekiq do
 
     it "measures maximum runtime of currently running jobs" do
       Yabeda.sidekiq.running_job_runtime.values.clear # This is a hack
-      Yabeda::Sidekiq.jobs_started_at.clear
+      described_class.jobs_started_at.clear
 
       Sidekiq::Testing.inline! do
         workers = []
@@ -184,12 +184,16 @@ RSpec.describe Yabeda::Sidekiq do
         )
 
         sleep 0.01
-        FailingActiveJob.perform_later rescue nil
+        begin
+          FailingActiveJob.perform_later
+        rescue StandardError
+          nil
+        end
         Yabeda.collectors.each(&:call)
 
         expect(Yabeda.sidekiq.running_job_runtime.values).to include(
           { queue: "default", worker: "SampleLongRunningJob" } => (be >= 0.02),
-          { queue: "default", worker: "FailingActiveJob" }     => 0,
+          { queue: "default", worker: "FailingActiveJob" } => 0,
         )
 
         # When all jobs are completed, metric should respond with zero
@@ -197,7 +201,7 @@ RSpec.describe Yabeda::Sidekiq do
         Yabeda.collectors.each(&:call)
         expect(Yabeda.sidekiq.running_job_runtime.values).to include(
           { queue: "default", worker: "SampleLongRunningJob" } => 0,
-          { queue: "default", worker: "FailingActiveJob" }     => 0,
+          { queue: "default", worker: "FailingActiveJob" } => 0,
         )
       end
     end
