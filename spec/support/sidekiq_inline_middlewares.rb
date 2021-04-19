@@ -7,6 +7,7 @@ module SidekiqTestingInlineWithMiddlewares
     return super unless Sidekiq::Testing.inline?
 
     job = Sidekiq.load_json(Sidekiq.dump_json(job))
+    job["jid"] ||= SecureRandom.hex(12)
     job_class = Sidekiq::Testing.constantize(job["class"])
     job_instance = job_class.new
     queue = (job_instance.sidekiq_options_hash || {}).fetch("queue", "default")

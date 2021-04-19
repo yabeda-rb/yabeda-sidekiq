@@ -12,6 +12,7 @@ module Yabeda
         begin
           job_instance = ::Sidekiq::Job.new(job)
           Yabeda.sidekiq_job_latency.measure(labels, job_instance.latency)
+          Yabeda::Sidekiq.jobs_started_at[labels][job["jid"]] = start
           Yabeda.with_tags(**custom_tags) do
             yield
           end
@@ -22,6 +23,7 @@ module Yabeda
         ensure
           Yabeda.sidekiq_job_runtime.measure(labels, elapsed(start))
           Yabeda.sidekiq_jobs_executed_total.increment(labels)
+          Yabeda::Sidekiq.jobs_started_at[labels].delete(job["jid"])
         end
       end
       # rubocop: enable Metrics/AbcSize, Metrics/MethodLength:

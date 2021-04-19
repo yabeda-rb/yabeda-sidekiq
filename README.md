@@ -49,6 +49,7 @@ end
  - Number of jobs in dead set (“morgue”): `sidekiq_jobs_dead_count`
  - Active workers count: `sidekiq_active_processes`
  - Active processes count: `sidekiq_active_workers_count`
+ - Maximum runtime of currently executing jobs: `sidekiq_running_job_runtime` (useful for detection of hung jobs, segmented by queue and class name)
 
 ## Custom tags
 
