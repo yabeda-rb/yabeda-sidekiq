@@ -8,6 +8,15 @@ class SamplePlainJob
   end
 end
 
+class SampleLongRunningJob
+  include Sidekiq::Worker
+
+  def perform(*_args)
+    sleep 0.05
+    "Phew, I'm done!"
+  end
+end
+
 class SampleComplexJob
   include Sidekiq::Worker
 
