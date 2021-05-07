@@ -43,6 +43,9 @@ end
  - Time of job run: `sidekiq_job_runtime` (seconds per job execution, segmented by queue and class name)
  - Time of the queue latency `sidekiq_queue_latency` (the difference in seconds since the oldest job in the queue was enqueued)
  - Time of the job latency `sidekiq_job_latency` (the difference in seconds since the enqueuing until running job)
+
+These can be disabled with setting `YABEDA_SIDEKIQ_GENERAL_METRICS_DISABLE=1`:
+
  - Number of jobs in queues: `sidekiq_jobs_waiting_count` (segmented by queue)
  - Number of scheduled jobs:`sidekiq_jobs_scheduled_count`
  - Number of jobs in retry set: `sidekiq_jobs_retry_count`

@@ -45,6 +45,8 @@ module Yabeda
                               tags: %i[queue worker],
                               buckets: LONG_RUNNING_JOB_RUNTIME_BUCKETS
 
+      next if ENV["YABEDA_SIDEKIQ_GENERAL_METRICS_DISABLE"]
+
       collect do
         stats = ::Sidekiq::Stats.new
 
