@@ -22,9 +22,9 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
+  spec.add_dependency "anyway_config", ">= 1.3", "< 3"
   spec.add_dependency "sidekiq"
   spec.add_dependency "yabeda", "~> 0.6"
-  spec.add_dependency "anyway_config", ">= 1.3", "< 3"
 
   spec.add_development_dependency "activejob", ">= 6.0"
   spec.add_development_dependency "bundler", "~> 2.0"
