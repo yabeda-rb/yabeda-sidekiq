@@ -7,6 +7,7 @@ require "yabeda"
 require "yabeda/sidekiq/version"
 require "yabeda/sidekiq/client_middleware"
 require "yabeda/sidekiq/server_middleware"
+require "yabeda/sidekiq/config"
 
 module Yabeda
   module Sidekiq
@@ -16,6 +17,8 @@ module Yabeda
     ].freeze
 
     Yabeda.configure do
+      config = Config.new
+
       group :sidekiq
 
       counter :jobs_enqueued_total, tags: %i[queue worker], comment: "A counter of the total number of jobs sidekiq enqueued."
@@ -26,13 +29,18 @@ module Yabeda
       counter   :jobs_success_total,   tags: %i[queue worker], comment: "A counter of the total number of jobs successfully processed by sidekiq."
       counter   :jobs_failed_total,    tags: %i[queue worker], comment: "A counter of the total number of jobs failed in sidekiq."
 
-      gauge     :jobs_waiting_count,   tags: %i[queue], comment: "The number of jobs waiting to process in sidekiq."
-      gauge     :active_workers_count, tags: [],        comment: "The number of currently running machines with sidekiq workers."
-      gauge     :jobs_scheduled_count, tags: [],        comment: "The number of jobs scheduled for later execution."
-      gauge     :jobs_retry_count,     tags: [],        comment: "The number of failed jobs waiting to be retried"
-      gauge     :jobs_dead_count,      tags: [],        comment: "The number of jobs exceeded their retry count."
-      gauge     :active_processes,     tags: [],        comment: "The number of active Sidekiq worker processes."
-      gauge     :queue_latency,        tags: %i[queue], comment: "The queue latency, the difference in seconds since the oldest job in the queue was enqueued"
+      # Metrics not specific for current Sidekiq process, but representing state of the whole Sidekiq installation (queues, processes, etc)
+      # You can opt-out from collecting these by setting YABEDA_SIDEKIQ_COLLECT_GENERAL_METRICS to falsy value (+no+ or +false+)
+      if config.collect_general_metrics
+        gauge     :jobs_waiting_count,   tags: %i[queue], comment: "The number of jobs waiting to process in sidekiq."
+        gauge     :active_workers_count, tags: [],        comment: "The number of currently running machines with sidekiq workers."
+        gauge     :jobs_scheduled_count, tags: [],        comment: "The number of jobs scheduled for later execution."
+        gauge     :jobs_retry_count,     tags: [],        comment: "The number of failed jobs waiting to be retried"
+        gauge     :jobs_dead_count,      tags: [],        comment: "The number of jobs exceeded their retry count."
+        gauge     :active_processes,     tags: [],        comment: "The number of active Sidekiq worker processes."
+        gauge     :queue_latency,        tags: %i[queue], comment: "The queue latency, the difference in seconds since the oldest job in the queue was enqueued"
+      end
+
       gauge     :running_job_runtime,  tags: %i[queue worker], aggregation: :max, unit: :seconds,
                                        comment: "How long currently running jobs are running (useful for detection of hung jobs)"
 
@@ -45,9 +53,11 @@ module Yabeda
                               tags: %i[queue worker],
                               buckets: LONG_RUNNING_JOB_RUNTIME_BUCKETS
 
-      next if ENV["YABEDA_SIDEKIQ_GENERAL_METRICS_DISABLE"]
-
       collect do
+        Yabeda::Sidekiq.track_max_job_runtime
+
+        next unless config.collect_general_metrics
+
         stats = ::Sidekiq::Stats.new
 
         stats.queues.each do |k, v|
@@ -62,8 +72,6 @@ module Yabeda
         ::Sidekiq::Queue.all.each do |queue|
           sidekiq_queue_latency.set({ queue: queue.name }, queue.latency)
         end
-
-        Yabeda::Sidekiq.track_max_job_runtime
 
         # That is quite slow if your retry set is large
         # I don't want to enable it by default

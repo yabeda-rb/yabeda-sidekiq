@@ -5,11 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## 0.8.0 - 2021-05-07
-
 ### Added
 
- - Add env variable YABEDA_SIDEKIQ_GENERAL_METRICS_DISABLE to control collecting of common metrics. See [#20](https://github.com/yabeda-rb/yabeda-sidekiq/pull/20). [@mrexox]
+ - Setting `collect_general_metrics` allowing to opt-out from collecting of whole Sidekiq installaction-wide metrics. See [#20](https://github.com/yabeda-rb/yabeda-sidekiq/pull/20). [@mrexox]
 
 ## 0.7.0 - 2020-07-15
 
@@ -69,3 +67,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 [@dsalahutdinov]: https://github.com/dsalahutdinov "Salahutdinov Dmitry"
 [@asusikov]: https://github.com/asusikov "Alexander Susikov"
+[@mrexox]: https://github.com/mrexox "Valentine Kiselev"

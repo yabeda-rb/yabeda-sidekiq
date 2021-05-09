@@ -37,22 +37,28 @@ end
 
 ## Metrics
 
+### Sidekiq process metrics
+
+Metrics representing state of current Sidekiq worker process and stats of executed or executing jobs:
+
  - Total number of executed jobs: `sidekiq_jobs_executed_total` -  (segmented by queue and class name)
  - Number of jobs have been finished successfully: `sidekiq_jobs_success_total` (segmented by queue and class name)
  - Number of jobs have been failed: `sidekiq_jobs_failed_total` (segmented by queue and class name)
  - Time of job run: `sidekiq_job_runtime` (seconds per job execution, segmented by queue and class name)
- - Time of the queue latency `sidekiq_queue_latency` (the difference in seconds since the oldest job in the queue was enqueued)
  - Time of the job latency `sidekiq_job_latency` (the difference in seconds since the enqueuing until running job)
+ - Maximum runtime of currently executing jobs: `sidekiq_running_job_runtime` (useful for detection of hung jobs, segmented by queue and class name)
 
-These can be disabled with setting `YABEDA_SIDEKIQ_GENERAL_METRICS_DISABLE=1`:
+### Cumulative Sidekiq metrics
+
+Metrics representing state of the whole Sidekiq installation (queues, processes, etc). These can be disabled by setting `collect_general_metrics` config key to `false` (e.g. by setting `YABEDA_SIDEKIQ_COLLECT_GENERAL_METRICS` env variable to `no`, see other methods in [anyway_config] docs):
 
  - Number of jobs in queues: `sidekiq_jobs_waiting_count` (segmented by queue)
+ - Time of the queue latency `sidekiq_queue_latency` (the difference in seconds since the oldest job in the queue was enqueued)
  - Number of scheduled jobs:`sidekiq_jobs_scheduled_count`
  - Number of jobs in retry set: `sidekiq_jobs_retry_count`
  - Number of jobs in dead set (“morgue”): `sidekiq_jobs_dead_count`
- - Active workers count: `sidekiq_active_processes`
- - Active processes count: `sidekiq_active_workers_count`
- - Maximum runtime of currently executing jobs: `sidekiq_running_job_runtime` (useful for detection of hung jobs, segmented by queue and class name)
+ - Active processes count: `sidekiq_active_processes`
+ - Active servers count: `sidekiq_active_workers_count`
 
 ## Custom tags
 
@@ -134,3 +140,4 @@ The gem is available as open source under the terms of the [MIT License](https:/
 [Sidekiq]: https://github.com/mperham/sidekiq/ "Simple, efficient background processing for Ruby"
 [yabeda]: https://github.com/yabeda-rb/yabeda
 [yabeda-prometheus]: https://github.com/yabeda-rb/yabeda-prometheus
+[anyway_config]: https://github.com/palkan/anyway_config "Configuration library for Ruby gems and applications"
