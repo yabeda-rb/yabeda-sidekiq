@@ -23,7 +23,9 @@ module Yabeda
 
       counter :jobs_enqueued_total, tags: %i[queue worker], comment: "A counter of the total number of jobs sidekiq enqueued."
 
-      next unless ::Sidekiq.server?
+      # By default further metrics are registered only for Sidekiq runners
+      # You can force collecting these metrics with setting YABEDA_SIDEKIQ_COLLECT_SERVER_METRICS to truthy value (+yes+ or +true+)
+      next unless config.collect_server_metrics
 
       counter   :jobs_executed_total,  tags: %i[queue worker], comment: "A counter of the total number of jobs sidekiq executed."
       counter   :jobs_success_total,   tags: %i[queue worker], comment: "A counter of the total number of jobs successfully processed by sidekiq."
