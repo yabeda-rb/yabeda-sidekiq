@@ -23,17 +23,27 @@ module Yabeda
 
       counter :jobs_enqueued_total, tags: %i[queue worker], comment: "A counter of the total number of jobs sidekiq enqueued."
 
-      # By default further metrics are registered only for Sidekiq runners
-      # You can force collecting these metrics with setting YABEDA_SIDEKIQ_COLLECT_SERVER_METRICS to truthy value (+yes+ or +true+)
-      next unless config.collect_server_metrics
+      if ::Sidekiq.server?
+        counter   :jobs_executed_total,  tags: %i[queue worker], comment: "A counter of the total number of jobs sidekiq executed."
+        counter   :jobs_success_total,   tags: %i[queue worker], comment: "A counter of the total number of jobs successfully processed by sidekiq."
+        counter   :jobs_failed_total,    tags: %i[queue worker], comment: "A counter of the total number of jobs failed in sidekiq."
 
-      counter   :jobs_executed_total,  tags: %i[queue worker], comment: "A counter of the total number of jobs sidekiq executed."
-      counter   :jobs_success_total,   tags: %i[queue worker], comment: "A counter of the total number of jobs successfully processed by sidekiq."
-      counter   :jobs_failed_total,    tags: %i[queue worker], comment: "A counter of the total number of jobs failed in sidekiq."
+        gauge     :running_job_runtime,  tags: %i[queue worker], aggregation: :max, unit: :seconds,
+                                         comment: "How long currently running jobs are running (useful for detection of hung jobs)"
+
+        histogram :job_latency, comment: "The job latency, the difference in seconds between enqueued and running time",
+                                unit: :seconds, per: :job,
+                                tags: %i[queue worker],
+                                buckets: LONG_RUNNING_JOB_RUNTIME_BUCKETS
+        histogram :job_runtime, comment: "A histogram of the job execution time.",
+                                unit: :seconds, per: :job,
+                                tags: %i[queue worker],
+                                buckets: LONG_RUNNING_JOB_RUNTIME_BUCKETS
+      end
 
       # Metrics not specific for current Sidekiq process, but representing state of the whole Sidekiq installation (queues, processes, etc)
       # You can opt-out from collecting these by setting YABEDA_SIDEKIQ_COLLECT_GENERAL_METRICS to falsy value (+no+ or +false+)
-      if config.collect_general_metrics
+      if config.collect_general_metrics # defaults to +::Sidekiq.server?+
         gauge     :jobs_waiting_count,   tags: %i[queue], comment: "The number of jobs waiting to process in sidekiq."
         gauge     :active_workers_count, tags: [],        comment: "The number of currently running machines with sidekiq workers."
         gauge     :jobs_scheduled_count, tags: [],        comment: "The number of jobs scheduled for later execution."
@@ -43,20 +53,8 @@ module Yabeda
         gauge     :queue_latency,        tags: %i[queue], comment: "The queue latency, the difference in seconds since the oldest job in the queue was enqueued"
       end
 
-      gauge     :running_job_runtime,  tags: %i[queue worker], aggregation: :max, unit: :seconds,
-                                       comment: "How long currently running jobs are running (useful for detection of hung jobs)"
-
-      histogram :job_latency, comment: "The job latency, the difference in seconds between enqueued and running time",
-                              unit: :seconds, per: :job,
-                              tags: %i[queue worker],
-                              buckets: LONG_RUNNING_JOB_RUNTIME_BUCKETS
-      histogram :job_runtime, comment: "A histogram of the job execution time.",
-                              unit: :seconds, per: :job,
-                              tags: %i[queue worker],
-                              buckets: LONG_RUNNING_JOB_RUNTIME_BUCKETS
-
       collect do
-        Yabeda::Sidekiq.track_max_job_runtime
+        Yabeda::Sidekiq.track_max_job_runtime if ::Sidekiq.server?
 
         next unless config.collect_general_metrics
 

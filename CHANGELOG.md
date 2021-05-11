@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
- - Setting `collect_general_metrics` allowing to opt-out from collecting of whole Sidekiq installaction-wide metrics. Setting `collect_server_metrics` allowing to force collecting metrics even if the instance is not a Sidekiq server. See [#20](https://github.com/yabeda-rb/yabeda-sidekiq/pull/20). [@mrexox]
+ - Setting `collect_general_metrics` allowing to force enable or disable collection of global (whole Sidekiq installaction-wide) metrics. See [#20](https://github.com/yabeda-rb/yabeda-sidekiq/pull/20). [@mrexox]
+
+    By default all sidekiq worker processes (servers) collects global metrics about whole Sidekiq installation.
+    Client processes (everything else that is not Sidekiq worker) by default doesn't.
+
+    With this config you can override this behavior:
+    - force disable if you don't want multiple Sidekiq workers to report the same numbers (that causes excess load to both Redis and monitoring)
+    - force enable if you want non-Sidekiq process to collect them (like dedicated metric exporter process)
 
 ## 0.7.0 - 2020-07-15
 
