@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
- - Setting `collect_general_metrics` allowing to opt-out from collecting of whole Sidekiq installaction-wide metrics. See [#20](https://github.com/yabeda-rb/yabeda-sidekiq/pull/20). [@mrexox]
+ - Setting `collect_general_metrics` allowing to opt-out from collecting of whole Sidekiq installaction-wide metrics. Setting `collect_server_metrics` allowing to force collecting metrics even if the instance is not a Sidekiq server. See [#20](https://github.com/yabeda-rb/yabeda-sidekiq/pull/20). [@mrexox]
 
 ## 0.7.0 - 2020-07-15
 
