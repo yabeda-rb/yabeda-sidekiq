@@ -37,7 +37,7 @@ end
 
 ## Metrics
 
-### Sidekiq process metrics
+### Local per-process metrics
 
 Metrics representing state of current Sidekiq worker process and stats of executed or executing jobs:
 
@@ -48,7 +48,7 @@ Metrics representing state of current Sidekiq worker process and stats of execut
  - Time of the job latency `sidekiq_job_latency` (the difference in seconds since the enqueuing until running job)
  - Maximum runtime of currently executing jobs: `sidekiq_running_job_runtime` (useful for detection of hung jobs, segmented by queue and class name)
 
-### Cumulative Sidekiq metrics
+### Global cluster-wide metrics
 
 Metrics representing state of the whole Sidekiq installation (queues, processes, etc):
 
@@ -60,7 +60,7 @@ Metrics representing state of the whole Sidekiq installation (queues, processes,
  - Active processes count: `sidekiq_active_processes`
  - Active servers count: `sidekiq_active_workers_count`
 
-By default all sidekiq worker processes (servers) collects global metrics about whole Sidekiq installation. This can be overriden by setting `collect_general_metrics` config key to `true` for non-Sidekiq processes or to `false` for Sidekiq processes (e.g. by setting `YABEDA_SIDEKIQ_COLLECT_GENERAL_METRICS` env variable to `no`, see other methods in [anyway_config] docs).
+By default all sidekiq worker processes (servers) collects global metrics about whole Sidekiq installation. This can be overridden by setting `collect_global_metrics` config key to `true` for non-Sidekiq processes or to `false` for Sidekiq processes (e.g. by setting `YABEDA_SIDEKIQ_COLLECT_GLOBAL_METRICS` env variable to `no`, see other methods in [anyway_config] docs).
 
 ## Custom tags
 

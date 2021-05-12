@@ -12,7 +12,7 @@ module Yabeda
       # With this config you can override this behavior:
       #  - force disable if you don't want multiple Sidekiq workers to report the same numbers (that causes excess load to both Redis and monitoring)
       #  - force enable if you want non-Sidekiq process to collect them (like dedicated metric exporter process)
-      attr_config collect_general_metrics: ::Sidekiq.server?
+      attr_config collect_global_metrics: ::Sidekiq.server?
     end
   end
 end
