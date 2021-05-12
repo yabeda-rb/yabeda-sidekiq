@@ -60,7 +60,7 @@ Metrics representing state of the whole Sidekiq installation (queues, processes,
  - Active processes count: `sidekiq_active_processes`
  - Active servers count: `sidekiq_active_workers_count`
 
-By default all sidekiq worker processes (servers) collects global metrics about whole Sidekiq installation. This can be overridden by setting `collect_global_metrics` config key to `true` for non-Sidekiq processes or to `false` for Sidekiq processes (e.g. by setting `YABEDA_SIDEKIQ_COLLECT_GLOBAL_METRICS` env variable to `no`, see other methods in [anyway_config] docs).
+By default all sidekiq worker processes (servers) collects global metrics about whole Sidekiq installation. This can be overridden by setting `collect_cluster_metrics` config key to `true` for non-Sidekiq processes or to `false` for Sidekiq processes (e.g. by setting `YABEDA_SIDEKIQ_COLLECT_CLUSTER_METRICS` env variable to `no`, see other methods in [anyway_config] docs).
 
 ## Custom tags
 

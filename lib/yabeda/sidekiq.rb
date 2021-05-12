@@ -42,8 +42,8 @@ module Yabeda
       end
 
       # Metrics not specific for current Sidekiq process, but representing state of the whole Sidekiq installation (queues, processes, etc)
-      # You can opt-out from collecting these by setting YABEDA_SIDEKIQ_COLLECT_GLOBAL_METRICS to falsy value (+no+ or +false+)
-      if config.collect_global_metrics # defaults to +::Sidekiq.server?+
+      # You can opt-out from collecting these by setting YABEDA_SIDEKIQ_COLLECT_CLUSTER_METRICS to falsy value (+no+ or +false+)
+      if config.collect_cluster_metrics # defaults to +::Sidekiq.server?+
         gauge     :jobs_waiting_count,   tags: %i[queue], comment: "The number of jobs waiting to process in sidekiq."
         gauge     :active_workers_count, tags: [],        comment: "The number of currently running machines with sidekiq workers."
         gauge     :jobs_scheduled_count, tags: [],        comment: "The number of jobs scheduled for later execution."
@@ -56,7 +56,7 @@ module Yabeda
       collect do
         Yabeda::Sidekiq.track_max_job_runtime if ::Sidekiq.server?
 
-        next unless config.collect_global_metrics
+        next unless config.collect_cluster_metrics
 
         stats = ::Sidekiq::Stats.new
 
