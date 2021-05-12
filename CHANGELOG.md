@@ -5,7 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+## 0.8.0 - 2021-05-12
+
 ### Added
+
+ - `sidekiq_running_job_runtime` metric that tracks maximum runtime of currently running jobs. It may be useful for detection of hung jobs. See [#17](https://github.com/yabeda-rb/yabeda-sidekiq/pull/17). [@dsalahutdinov], [@Envek]
 
  - Setting `collect_cluster_metrics` allowing to force enable or disable collection of global (whole Sidekiq installaction-wide) metrics. See [#20](https://github.com/yabeda-rb/yabeda-sidekiq/pull/20). [@mrexox]
 
@@ -72,6 +78,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
  - Initial release of evil-metrics-sidekiq gem. @Envek
 
+[@Envek]: https://github.com/Envek "Andrey Novikov"
 [@dsalahutdinov]: https://github.com/dsalahutdinov "Salahutdinov Dmitry"
 [@asusikov]: https://github.com/asusikov "Alexander Susikov"
 [@mrexox]: https://github.com/mrexox "Valentine Kiselev"
