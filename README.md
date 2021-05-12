@@ -85,6 +85,14 @@ class MyWorker
 end
 ```
 
+## Configuration
+
+Configuration is handled by [anyway_config] gem. With it you can load settings from environment variables (upcased and prefixed with `YABEDA_SIDEKIQ_`), YAML files, and other sources. See [anyway_config] docs for details.
+
+Config key                | Type     | Default                                                 | Description |
+------------------------- | -------- | ------------------------------------------------------- | ----------- |
+`collect_cluster_metrics` | boolean  | Enabled in Sidekiq worker processes, disabled otherwise | Defines whether this Ruby process should collect and expose metrics representing state of the whole Sidekiq installation (queues, processes, etc). |
+
 # Roadmap (TODO or Help wanted)
 
  - Implement optional segmentation of retry/schedule/dead sets
