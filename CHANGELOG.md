@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+### Added
+
+ - Setting `collect_cluster_metrics` allowing to force enable or disable collection of global (whole Sidekiq installaction-wide) metrics. See [#20](https://github.com/yabeda-rb/yabeda-sidekiq/pull/20). [@mrexox]
+
+    By default all sidekiq worker processes (servers) collects global metrics about whole Sidekiq installation.
+    Client processes (everything else that is not Sidekiq worker) by default doesn't.
+
+    With this config you can override this behavior:
+    - force disable if you don't want multiple Sidekiq workers to report the same numbers (that causes excess load to both Redis and monitoring)
+    - force enable if you want non-Sidekiq process to collect them (like dedicated metric exporter process)
+
 ## 0.7.0 - 2020-07-15
 
 ### Changed
@@ -63,3 +74,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 [@dsalahutdinov]: https://github.com/dsalahutdinov "Salahutdinov Dmitry"
 [@asusikov]: https://github.com/asusikov "Alexander Susikov"
+[@mrexox]: https://github.com/mrexox "Valentine Kiselev"
