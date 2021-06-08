@@ -1,4 +1,4 @@
-# Yabeda::[Sidekiq]
+# ![Yabeda::Sidekiq](./yabeda-sidekiq-logo.png)
 
 Built-in metrics for [Sidekiq] monitoring out of the box! Part of the [yabeda] suite.
 
