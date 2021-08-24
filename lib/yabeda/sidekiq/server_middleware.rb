@@ -4,13 +4,16 @@ module Yabeda
   module Sidekiq
     # Sidekiq worker middleware
     class ServerMiddleware
+      # See https://github.com/mperham/sidekiq/discussions/4971
+      JOB_RECORD_CLASS = defined?(::Sidekiq::JobRecord) ? ::Sidekiq::JobRecord : ::Sidekiq::Job
+
       # rubocop: disable Metrics/AbcSize, Metrics/MethodLength:
       def call(worker, job, queue)
         custom_tags = Yabeda::Sidekiq.custom_tags(worker, job).to_h
         labels = Yabeda::Sidekiq.labelize(worker, job, queue).merge(custom_tags)
         start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         begin
-          job_instance = ::Sidekiq::Job.new(job)
+          job_instance = JOB_RECORD_CLASS.new(job)
           Yabeda.sidekiq_job_latency.measure(labels, job_instance.latency)
           Yabeda::Sidekiq.jobs_started_at[labels][job["jid"]] = start
           Yabeda.with_tags(**custom_tags) do

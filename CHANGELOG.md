@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.8.1 - 2021-08-24
+
+### Fixed
+
+ - Compatibility with Sidekiq 6.2.2+ due to renamings in Sidekiq's undocumented API that yabeda-sidekiq uses. See [mperham/sidekiq#4971](https://github.com/mperham/sidekiq/discussions/4971). [@Envek]
+
 ## 0.8.0 - 2021-05-12
 
 ### Added
