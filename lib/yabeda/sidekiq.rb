@@ -16,8 +16,12 @@ module Yabeda
       30, 60, 120, 300, 1800, 3600, 21_600, # Sidekiq tasks may be very long-running
     ].freeze
 
+    def self.config
+      @config ||= Config.new
+    end
+
     Yabeda.configure do
-      config = Config.new
+      config = ::Yabeda::Sidekiq.config
 
       group :sidekiq
 
