@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
   It can be needed for official Prometheus client in multi-process mode where separate process expose metrics from Sidekiq worker processes.
 
+- `most_recent` aggregation for all cluster-wide gauges.
+
+  It is also needed for official Prometheus client in multi-process mode to reduce number of time series.
+
 ## 0.8.2 - 2022-09-14
 
 ### Added
