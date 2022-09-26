@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.9.0 - 2022-09-26
+
 ### Added
 
 - Configuration setting to declare worker in-process metrics outside workers.
