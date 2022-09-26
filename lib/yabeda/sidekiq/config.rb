@@ -13,6 +13,9 @@ module Yabeda
       #  - force disable if you don't want multiple Sidekiq workers to report the same numbers (that causes excess load to both Redis and monitoring)
       #  - force enable if you want non-Sidekiq process to collect them (like dedicated metric exporter process)
       attr_config collect_cluster_metrics: ::Sidekiq.server?
+
+      # Declare metrics that are only tracked inside worker process even outside them
+      attr_config declare_process_metrics: ::Sidekiq.server?
     end
   end
 end

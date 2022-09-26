@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Added
+
+- Configuration setting to declare worker in-process metrics outside workers.
+
+  It can be needed for official Prometheus client in multi-process mode where separate process expose metrics from Sidekiq worker processes.
+
 ## 0.8.2 - 2022-09-14
 
 ### Added
