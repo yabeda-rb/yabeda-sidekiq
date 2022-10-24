@@ -52,3 +52,11 @@ class FailingActiveJob < ActiveJob::Base
     raise "Boom"
   end
 end
+
+class ReRouteJobsMiddleware
+  def call(_worker, job, _queue, _redis_pool)
+    job["queue"] = "rerouted_queue"
+
+    yield
+  end
+end
