@@ -55,7 +55,8 @@ module Yabeda
         gauge     :jobs_retry_count,     tags: [],        aggregation: :most_recent, comment: "The number of failed jobs waiting to be retried"
         gauge     :jobs_dead_count,      tags: [],        aggregation: :most_recent, comment: "The number of jobs exceeded their retry count."
         gauge     :active_processes,     tags: [],        aggregation: :most_recent, comment: "The number of active Sidekiq worker processes."
-        gauge     :queue_latency,        tags: %i[queue], aggregation: :most_recent, comment: "The queue latency, the difference in seconds since the oldest job in the queue was enqueued"
+        gauge     :queue_latency,        tags: %i[queue], aggregation: :most_recent,
+                                         comment: "The queue latency, the difference in seconds since the oldest job in the queue was enqueued"
       end
 
       collect do
