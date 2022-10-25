@@ -46,8 +46,8 @@ RSpec.describe Yabeda::Sidekiq do
           { queue: "rerouted_queue", worker: "FailingPlainJob" } => 1,
         )
         expect(Yabeda.sidekiq.jobs_rerouted_total.values).to include(
-          { queue: "default", worker: "SamplePlainJob" } => 2,
-          { queue: "default", worker: "FailingPlainJob" } => 1,
+          { from_queue: "default", to_queue: "rerouted_queue", worker: "SamplePlainJob" } => 2,
+          { from_queue: "default", to_queue: "rerouted_queue", worker: "FailingPlainJob" } => 1,
         )
       end
     end
@@ -111,7 +111,7 @@ RSpec.describe Yabeda::Sidekiq do
           { queue: "rerouted_queue", worker: "SampleActiveJob" } => 1,
         )
         expect(Yabeda.sidekiq.jobs_rerouted_total.values).to include(
-          { queue: "default", worker: "SampleActiveJob" } => 1,
+          { from_queue: "default", to_queue: "rerouted_queue", worker: "SampleActiveJob" } => 1,
         )
       end
     end

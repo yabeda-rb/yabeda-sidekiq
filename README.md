@@ -47,6 +47,8 @@ Metrics representing state of current Sidekiq worker process and stats of execut
  - Time of job run: `sidekiq_job_runtime` (seconds per job execution, segmented by queue and class name)
  - Time of the job latency `sidekiq_job_latency` (the difference in seconds since the enqueuing until running job)
  - Maximum runtime of currently executing jobs: `sidekiq_running_job_runtime` (useful for detection of hung jobs, segmented by queue and class name)
+ - Total number enqueued jobs: `sidekiq_jobs_enqueued_total_count` (segmented by queue and class name)
+ - Total number rerouted jobs: `sidekiq_jobs_rerouted_total_count` (segmented by origin queue (from_queue), rerouted queue (to_queue) and class name)
 
 ### Global cluster-wide metrics
 

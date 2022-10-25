@@ -26,7 +26,7 @@ module Yabeda
       group :sidekiq
 
       counter :jobs_enqueued_total, tags: %i[queue worker], comment: "A counter of the total number of jobs sidekiq enqueued."
-      counter :jobs_rerouted_total, tags: %i[queue worker], comment: "A counter of the total number of rerouted jobs sidekiq enqueued."
+      counter :jobs_rerouted_total, tags: %i[from_queue to_queue worker], comment: "A counter of the total number of rerouted jobs sidekiq enqueued."
 
       if config.declare_process_metrics # defaults to +::Sidekiq.server?+
         counter   :jobs_executed_total,  tags: %i[queue worker], comment: "A counter of the total number of jobs sidekiq executed."
