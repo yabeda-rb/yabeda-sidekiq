@@ -26,6 +26,7 @@ module Yabeda
       group :sidekiq
 
       counter :jobs_enqueued_total, tags: %i[queue worker], comment: "A counter of the total number of jobs sidekiq enqueued."
+      counter :jobs_rerouted_total, tags: %i[from_queue to_queue worker], comment: "A counter of the total number of rerouted jobs sidekiq enqueued."
 
       if config.declare_process_metrics # defaults to +::Sidekiq.server?+
         counter   :jobs_executed_total,  tags: %i[queue worker], comment: "A counter of the total number of jobs sidekiq executed."
@@ -54,7 +55,8 @@ module Yabeda
         gauge     :jobs_retry_count,     tags: [],        aggregation: :most_recent, comment: "The number of failed jobs waiting to be retried"
         gauge     :jobs_dead_count,      tags: [],        aggregation: :most_recent, comment: "The number of jobs exceeded their retry count."
         gauge     :active_processes,     tags: [],        aggregation: :most_recent, comment: "The number of active Sidekiq worker processes."
-        gauge     :queue_latency,        tags: %i[queue], aggregation: :most_recent, comment: "The queue latency, the difference in seconds since the oldest job in the queue was enqueued"
+        gauge     :queue_latency,        tags: %i[queue], aggregation: :most_recent,
+                                         comment: "The queue latency, the difference in seconds since the oldest job in the queue was enqueued"
       end
 
       collect do
