@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.10.0 - 2022-10-25
+
+### Added
+
+- New metric `sidekiq_jobs_rerouted_total_count` to measure jobs that on enqueue were pushed to different queue from the one specified in worker's `sidekiq_options`. See [#30](https://github.com/yabeda-rb/yabeda-sidekiq/pull/30). [@LukinEgor]
+
+### Fixed
+
+- In `sidekiq_jobs_enqueued_total_count` track real queue that job was pushed into, not the one specified in `sidekiq_options` (sometimes they may be different). See [#30](https://github.com/yabeda-rb/yabeda-sidekiq/pull/30). [@LukinEgor]
+
 ## 0.9.0 - 2022-09-26
 
 ### Added
@@ -108,3 +118,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 [@dsalahutdinov]: https://github.com/dsalahutdinov "Salahutdinov Dmitry"
 [@asusikov]: https://github.com/asusikov "Alexander Susikov"
 [@mrexox]: https://github.com/mrexox "Valentine Kiselev"
+[@LukinEgor]: https://github.com/LukinEgor "Egor Lukin"
