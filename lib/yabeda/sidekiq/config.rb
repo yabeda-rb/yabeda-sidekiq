@@ -16,6 +16,10 @@ module Yabeda
 
       # Declare metrics that are only tracked inside worker process even outside them
       attr_config declare_process_metrics: ::Sidekiq.server?
+
+      # Retries are tracked by default as a single metric. If you want to track them separately for each queue, set this to +true+
+      # Disabled by default because it is quite slow if the retry set is large
+      attr_config retries_segmented_by_queue: false
     end
   end
 end
