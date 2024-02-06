@@ -4,6 +4,7 @@ require "bundler/setup"
 require "sidekiq/cli" # Fake that we're a worker to test worker-specific things
 require "yabeda/sidekiq"
 
+require "yabeda/rspec"
 require "sidekiq/testing"
 require "active_job"
 require "active_job/queue_adapters/sidekiq_adapter"
@@ -29,8 +30,10 @@ RSpec.configure do |config|
   Kernel.srand config.seed
   config.order = :random
 
+  config.filter_run focus: true
+  config.run_all_when_everything_filtered = true
+
   config.before(:all) do
-    Yabeda.configure!
     Sidekiq::Testing.fake!
     ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper.jobs.clear
   end
@@ -38,6 +41,18 @@ RSpec.configure do |config|
   config.after(:all) do
     Sidekiq::Queues.clear_all
     Sidekiq::Testing.disable!
+  end
+
+  config.around do |ex|
+    next ex.run unless ex.metadata[:sidekiq]
+
+    begin
+      previous_mode = Sidekiq::Testing.__test_mode
+      Sidekiq::Testing.__set_test_mode(ex.metadata[:sidekiq])
+      ex.run
+    ensure
+      Sidekiq::Testing.__set_test_mode(previous_mode)
+    end
   end
 end
 

@@ -3,7 +3,7 @@ require:
   - rubocop-rspec
 
 AllCops:
-  TargetRubyVersion: 2.3
+  TargetRubyVersion: 2.5
 
 Metrics/BlockLength:
   Enabled: false
@@ -65,3 +65,12 @@ Metrics/MethodLength:
 
 Metrics/AbcSize:
   Max: 17
+
+Style/SoleNestedConditional:
+  Enabled: false
+
+Style/ExplicitBlockArgument:
+  Enabled: false
+
+Gemspec/RequiredRubyVersion:
+  Enabled: false
