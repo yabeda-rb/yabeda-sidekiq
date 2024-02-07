@@ -116,11 +116,7 @@ module Yabeda
       end
 
       def worker_class(worker, job)
-        if defined?(ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper)
-          if worker.is_a?(ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper) || worker == ActiveJob::QueueAdapters::SidekiqAdapter::JobWrapper
-            return job["wrapped"].to_s
-          end
-        end
+        worker = job["wrapped"] || worker
         (worker.is_a?(String) || worker.is_a?(Class) ? worker : worker.class).to_s
       end
 

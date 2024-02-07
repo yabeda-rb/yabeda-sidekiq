@@ -6,24 +6,21 @@ RSpec.describe Yabeda::Sidekiq do
   end
 
   it "configures middlewares" do
-    expect(Sidekiq.client_middleware).to include(have_attributes(klass: Yabeda::Sidekiq::ClientMiddleware))
+    config = Sidekiq.respond_to?(:default_configuration) ? Sidekiq.default_configuration : Sidekiq
+    expect(config.client_middleware).to include(have_attributes(klass: Yabeda::Sidekiq::ClientMiddleware))
   end
 
   describe "plain Sidekiq jobs" do
     it "counts enqueues" do
-      Yabeda.sidekiq.jobs_enqueued_total.values.clear # This is a hack
-      Yabeda.sidekiq.jobs_rerouted_total.values.clear # This is a hack
-
-      SamplePlainJob.perform_async
-      SamplePlainJob.perform_async
-      FailingPlainJob.perform_async
-
-      expect(Yabeda.sidekiq.jobs_enqueued_total.values).to include(
-        { queue: "default", worker: "SamplePlainJob" } => 2,
-        { queue: "default", worker: "FailingPlainJob" } => 1,
-      )
-
-      expect(Yabeda.sidekiq.jobs_rerouted_total.values).to be_empty
+      expect do
+        SamplePlainJob.perform_async
+        SamplePlainJob.perform_async
+        FailingPlainJob.perform_async
+      end.to \
+        increment_yabeda_counter(Yabeda.sidekiq.jobs_enqueued_total).with(
+          { queue: "default", worker: "SamplePlainJob" } => 2,
+          { queue: "default", worker: "FailingPlainJob" } => 1,
+        )
     end
 
     describe "re-routing jobs by middleware" do
@@ -34,31 +31,24 @@ RSpec.describe Yabeda::Sidekiq do
       end
 
       it "counts enqueues" do
-        Yabeda.sidekiq.jobs_enqueued_total.values.clear # This is a hack
-        Yabeda.sidekiq.jobs_rerouted_total.values.clear # This is a hack
-
-        SamplePlainJob.perform_async
-        SamplePlainJob.perform_async
-        FailingPlainJob.perform_async
-
-        expect(Yabeda.sidekiq.jobs_enqueued_total.values).to include(
-          { queue: "rerouted_queue", worker: "SamplePlainJob" } => 2,
-          { queue: "rerouted_queue", worker: "FailingPlainJob" } => 1,
-        )
-        expect(Yabeda.sidekiq.jobs_rerouted_total.values).to include(
-          { from_queue: "default", to_queue: "rerouted_queue", worker: "SamplePlainJob" } => 2,
-          { from_queue: "default", to_queue: "rerouted_queue", worker: "FailingPlainJob" } => 1,
-        )
+        expect do
+          SamplePlainJob.perform_async
+          SamplePlainJob.perform_async
+          FailingPlainJob.perform_async
+        end.to \
+          increment_yabeda_counter(Yabeda.sidekiq.jobs_enqueued_total).with(
+            { queue: "rerouted_queue", worker: "SamplePlainJob" } => 2,
+            { queue: "rerouted_queue", worker: "FailingPlainJob" } => 1,
+          ).and \
+            increment_yabeda_counter(Yabeda.sidekiq.jobs_rerouted_total).with(
+              { from_queue: "default", to_queue: "rerouted_queue", worker: "SamplePlainJob" } => 2,
+              { from_queue: "default", to_queue: "rerouted_queue", worker: "FailingPlainJob" } => 1,
+            )
       end
     end
 
-    it "measures runtime" do
-      Yabeda.sidekiq.jobs_executed_total.values.clear   # This is a hack
-      Yabeda.sidekiq.jobs_success_total.values.clear    # This is a hack
-      Yabeda.sidekiq.jobs_failed_total.values.clear     # This is a hack
-      Yabeda.sidekiq.job_runtime.values.clear           # This is a hack also
-
-      Sidekiq::Testing.inline! do
+    it "measures runtime", sidekiq: :inline do
+      expect do
         SamplePlainJob.perform_async
         SamplePlainJob.perform_async
         begin
@@ -66,34 +56,30 @@ RSpec.describe Yabeda::Sidekiq do
         rescue StandardError
           nil
         end
-      end
-
-      expect(Yabeda.sidekiq.jobs_executed_total.values).to eq(
-        { queue: "default", worker: "SamplePlainJob" } => 2,
-        { queue: "default", worker: "FailingPlainJob" } => 1,
-      )
-      expect(Yabeda.sidekiq.jobs_success_total.values).to eq(
-        { queue: "default", worker: "SamplePlainJob" } => 2,
-      )
-      expect(Yabeda.sidekiq.jobs_failed_total.values).to eq(
-        { queue: "default", worker: "FailingPlainJob" } => 1,
-      )
-      expect(Yabeda.sidekiq.job_runtime.values).to include(
-        { queue: "default", worker: "SamplePlainJob" } => kind_of(Numeric),
-        { queue: "default", worker: "FailingPlainJob" } => kind_of(Numeric),
-      )
+      end.to \
+        increment_yabeda_counter(Yabeda.sidekiq.jobs_executed_total).with(
+          { queue: "default", worker: "SamplePlainJob" } => 2,
+          { queue: "default", worker: "FailingPlainJob" } => 1,
+        ).and \
+          increment_yabeda_counter(Yabeda.sidekiq.jobs_success_total).with(
+            { queue: "default", worker: "SamplePlainJob" } => 2,
+          ).and \
+            increment_yabeda_counter(Yabeda.sidekiq.jobs_failed_total).with(
+              { queue: "default", worker: "FailingPlainJob" } => 1,
+            ).and \
+              measure_yabeda_histogram(Yabeda.sidekiq.job_runtime).with(
+                { queue: "default", worker: "SamplePlainJob" } => kind_of(Numeric),
+                { queue: "default", worker: "FailingPlainJob" } => kind_of(Numeric),
+              )
     end
   end
 
   describe "ActiveJob jobs" do
     it "counts enqueues" do
-      Yabeda.sidekiq.jobs_enqueued_total.values.clear # This is a hack
-      Yabeda.sidekiq.jobs_rerouted_total.values.clear # This is a hack
-      SampleActiveJob.perform_later
-      expect(Yabeda.sidekiq.jobs_enqueued_total.values).to include(
-        { queue: "default", worker: "SampleActiveJob" } => 1,
-      )
-      expect(Yabeda.sidekiq.jobs_rerouted_total.values).to be_empty
+      expect { SampleActiveJob.perform_later }.to \
+        increment_yabeda_counter(Yabeda.sidekiq.jobs_enqueued_total).with(
+          { queue: "default", worker: "SampleActiveJob" } => 1,
+        )
     end
 
     describe "re-routing jobs by middleware" do
@@ -104,25 +90,18 @@ RSpec.describe Yabeda::Sidekiq do
       end
 
       it "counts enqueues" do
-        Yabeda.sidekiq.jobs_enqueued_total.values.clear # This is a hack
-        Yabeda.sidekiq.jobs_rerouted_total.values.clear # This is a hack
-        SampleActiveJob.perform_later
-        expect(Yabeda.sidekiq.jobs_enqueued_total.values).to include(
-          { queue: "rerouted_queue", worker: "SampleActiveJob" } => 1,
-        )
-        expect(Yabeda.sidekiq.jobs_rerouted_total.values).to include(
-          { from_queue: "default", to_queue: "rerouted_queue", worker: "SampleActiveJob" } => 1,
-        )
+        expect { SampleActiveJob.perform_later }.to \
+          increment_yabeda_counter(Yabeda.sidekiq.jobs_enqueued_total).with(
+            { queue: "rerouted_queue", worker: "SampleActiveJob" } => 1,
+          ).and \
+            increment_yabeda_counter(Yabeda.sidekiq.jobs_rerouted_total).with(
+              { from_queue: "default", to_queue: "rerouted_queue", worker: "SampleActiveJob" } => 1,
+            )
       end
     end
 
-    it "measures runtime" do
-      Yabeda.sidekiq.jobs_executed_total.values.clear   # This is a hack
-      Yabeda.sidekiq.jobs_success_total.values.clear    # This is a hack
-      Yabeda.sidekiq.jobs_failed_total.values.clear     # This is a hack
-      Yabeda.sidekiq.job_runtime.values.clear           # This is a hack also
-
-      Sidekiq::Testing.inline! do
+    it "measures runtime", sidekiq: :inline do
+      expect do
         SampleActiveJob.perform_later
         SampleActiveJob.perform_later
         begin
@@ -130,44 +109,36 @@ RSpec.describe Yabeda::Sidekiq do
         rescue StandardError
           nil
         end
-      end
-
-      expect(Yabeda.sidekiq.jobs_executed_total.values).to eq(
-        { queue: "default", worker: "SampleActiveJob" } => 2,
-        { queue: "default", worker: "FailingActiveJob" } => 1,
-      )
-      expect(Yabeda.sidekiq.jobs_success_total.values).to eq(
-        { queue: "default", worker: "SampleActiveJob" } => 2,
-      )
-      expect(Yabeda.sidekiq.jobs_failed_total.values).to eq(
-        { queue: "default", worker: "FailingActiveJob" } => 1,
-      )
-      expect(Yabeda.sidekiq.job_runtime.values).to include(
-        { queue: "default", worker: "SampleActiveJob" } => kind_of(Numeric),
-        { queue: "default", worker: "FailingActiveJob" } => kind_of(Numeric),
-      )
+      end.to \
+        increment_yabeda_counter(Yabeda.sidekiq.jobs_executed_total).with(
+          { queue: "default", worker: "SampleActiveJob" } => 2,
+          { queue: "default", worker: "FailingActiveJob" } => 1,
+        ).and \
+          increment_yabeda_counter(Yabeda.sidekiq.jobs_success_total).with(
+            { queue: "default", worker: "SampleActiveJob" } => 2,
+          ).and \
+            increment_yabeda_counter(Yabeda.sidekiq.jobs_failed_total).with(
+              { queue: "default", worker: "FailingActiveJob" } => 1,
+            ).and \
+              measure_yabeda_histogram(Yabeda.sidekiq.job_runtime).with(
+                { queue: "default", worker: "SampleActiveJob" } => kind_of(Numeric),
+                { queue: "default", worker: "FailingActiveJob" } => kind_of(Numeric),
+              )
     end
   end
 
   describe "#yabeda_tags worker method" do
-    it "uses custom labels for both sidekiq and application metrics" do
-      Yabeda.sidekiq.jobs_executed_total.values.clear   # This is a hack
-      Yabeda.sidekiq.job_runtime.values.clear           # This is a hack also
-      Yabeda.test.whatever.values.clear                 # And this
-
-      Sidekiq::Testing.inline! do
-        SampleComplexJob.perform_async
-      end
-
-      expect(Yabeda.sidekiq.jobs_executed_total.values).to eq(
-        { queue: "default", worker: "SampleComplexJob", implicit: true } => 1,
-      )
-      expect(Yabeda.sidekiq.job_runtime.values).to include(
-        { queue: "default", worker: "SampleComplexJob", implicit: true } => kind_of(Numeric),
-      )
-      expect(Yabeda.test.whatever.values).to include(
-        { explicit: true, implicit: true } => 1,
-      )
+    it "uses custom labels for both sidekiq and application metrics", sidekiq: :inline do
+      expect { SampleComplexJob.perform_async }.to \
+        increment_yabeda_counter(Yabeda.sidekiq.jobs_executed_total).with(
+          { queue: "default", worker: "SampleComplexJob", implicit: true } => 1,
+        ).and \
+          measure_yabeda_histogram(Yabeda.sidekiq.job_runtime).with(
+            { queue: "default", worker: "SampleComplexJob", implicit: true } => kind_of(Numeric),
+          ).and \
+            increment_yabeda_counter(Yabeda.test.whatever).with(
+              { explicit: true, implicit: true } => 1,
+            )
     end
   end
 
@@ -194,67 +165,56 @@ RSpec.describe Yabeda::Sidekiq do
     end
 
     it "collects queue latencies" do
-      Yabeda.collectors.each(&:call)
-
-      expect(Yabeda.sidekiq.queue_latency.values).to include(
-        { queue: "default" } => 0.5,
-        { queue: "mailers" } => 0.0,
-      )
+      expect { Yabeda.collect! }.to \
+        update_yabeda_gauge(Yabeda.sidekiq.queue_latency).with(
+          { queue: "default" } => 0.5,
+          { queue: "mailers" } => 0.0,
+        )
     end
 
     it "collects queue sizes" do
-      Yabeda.collectors.each(&:call)
-
-      expect(Yabeda.sidekiq.jobs_waiting_count.values).to include(
-        { queue: "default" } => 5,
-        { queue: "mailers" } => 4,
-      )
+      expect { Yabeda.collect! }.to \
+        update_yabeda_gauge(Yabeda.sidekiq.jobs_waiting_count).with(
+          { queue: "default" } => 5,
+          { queue: "mailers" } => 4,
+        )
     end
 
     it "collects named queues stats", :aggregate_failures do
-      Yabeda.collectors.each(&:call)
-
-      expect(Yabeda.sidekiq.jobs_retry_count.values).to eq({ {} => 1 })
-      expect(Yabeda.sidekiq.jobs_dead_count.values).to eq({ {} => 3 })
-      expect(Yabeda.sidekiq.jobs_scheduled_count.values).to eq({ {} => 2 })
+      expect { Yabeda.collect! }.to \
+        update_yabeda_gauge(Yabeda.sidekiq.jobs_retry_count).with(1).and \
+          update_yabeda_gauge(Yabeda.sidekiq.jobs_dead_count).with(3).and \
+            update_yabeda_gauge(Yabeda.sidekiq.jobs_scheduled_count).with(2)
     end
 
-    it "measures maximum runtime of currently running jobs" do
-      Yabeda.sidekiq.running_job_runtime.values.clear # This is a hack
-      described_class.jobs_started_at.clear
-
-      Sidekiq::Testing.inline! do
-        workers = []
-        workers.push(Thread.new { SampleLongRunningJob.perform_async })
-        sleep 0.012 # Ruby can sleep less than requested
-        workers.push(Thread.new { SampleLongRunningJob.perform_async })
-
-        Yabeda.collectors.each(&:call)
-        expect(Yabeda.sidekiq.running_job_runtime.values).to include(
+    it "measures maximum runtime of currently running jobs", sidekiq: :inline do
+      workers = []
+      workers.push(Thread.new { SampleLongRunningJob.perform_async })
+      sleep 0.015 # Ruby can sleep less than requested
+      workers.push(Thread.new { SampleLongRunningJob.perform_async })
+      expect { Yabeda.collect! }.to \
+        update_yabeda_gauge(Yabeda.sidekiq.running_job_runtime).with(
           { queue: "default", worker: "SampleLongRunningJob" } => (be >= 0.010),
         )
 
-        sleep 0.012 # Ruby can sleep less than requested
-        begin
-          FailingActiveJob.perform_later
-        rescue StandardError
-          nil
-        end
-        Yabeda.collectors.each(&:call)
-
-        expect(Yabeda.sidekiq.running_job_runtime.values).to include(
-          { queue: "default", worker: "SampleLongRunningJob" } => (be >= 0.020),
-          { queue: "default", worker: "FailingActiveJob" } => 0,
-        )
-
-        # When all jobs are completed, metric should respond with zero
-        workers.map(&:join)
-        Yabeda.collectors.each(&:call)
-        expect(Yabeda.sidekiq.running_job_runtime.values).to include(
-          { queue: "default", worker: "SampleLongRunningJob" } => 0,
-          { queue: "default", worker: "FailingActiveJob" } => 0,
-        )
+      sleep 0.015 # Ruby can sleep less than requested
+      begin
+        FailingActiveJob.perform_later
+      rescue StandardError
+        nil
       end
+
+      expect { Yabeda.collect! }.to \
+        update_yabeda_gauge(Yabeda.sidekiq.running_job_runtime).with(
+          { queue: "default", worker: "SampleLongRunningJob" } => (be >= 0.020),
+        )
+
+      # When all jobs are completed, metric should respond with zero
+      workers.map(&:join)
+      expect { Yabeda.collect! }.to \
+        update_yabeda_gauge(Yabeda.sidekiq.running_job_runtime).with(
+          { queue: "default", worker: "SampleLongRunningJob" } => 0.0,
+        )
     end
   end
 
