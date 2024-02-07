@@ -99,14 +99,15 @@ end
 
 Configuration is handled by [anyway_config] gem. With it you can load settings from environment variables (upcased and prefixed with `YABEDA_SIDEKIQ_`), YAML files, and other sources. See [anyway_config] docs for details.
 
-Config key                | Type     | Default                                                 | Description                                                                                                                                        |
-------------------------- | -------- | ------------------------------------------------------- |----------------------------------------------------------------------------------------------------------------------------------------------------|
-`collect_cluster_metrics` | boolean  | Enabled in Sidekiq worker processes, disabled otherwise | Defines whether this Ruby process should collect and expose metrics representing state of the whole Sidekiq installation (queues, processes, etc). |
-`declare_process_metrics` | boolean  | Enabled in Sidekiq worker processes, disabled otherwise | Declare metrics that are only tracked inside worker process even outside of them. Useful for multiprocess metric collection.                       |
+Config key                   | Type     | Default                                                 | Description                                                                                                                                        |
+---------------------------- | -------- | ------------------------------------------------------- |----------------------------------------------------------------------------------------------------------------------------------------------------|
+`collect_cluster_metrics`    | boolean  | Enabled in Sidekiq worker processes, disabled otherwise | Defines whether this Ruby process should collect and expose metrics representing state of the whole Sidekiq installation (queues, processes, etc). |
+`declare_process_metrics`    | boolean  | Enabled in Sidekiq worker processes, disabled otherwise | Declare metrics that are only tracked inside worker process even outside of them. Useful for multiprocess metric collection.                       |
+`retries_segmented_by_queue` | boolean  | Disabled                                                | Defines wheter retries are segemented by queue or reported as a single metric                                                                      |
 
 # Roadmap (TODO or Help wanted)
 
- - Implement optional segmentation of retry/schedule/dead sets
+ - Implement optional segmentation of schedule/dead sets
 
    It should be disabled by default as it requires to iterate over all jobs in sets and may be very slow on large sets.
 
