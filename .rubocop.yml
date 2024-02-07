@@ -74,3 +74,6 @@ Style/ExplicitBlockArgument:
 
 Gemspec/RequiredRubyVersion:
   Enabled: false
+
+Metrics/ModuleLength:
+  Max: 200

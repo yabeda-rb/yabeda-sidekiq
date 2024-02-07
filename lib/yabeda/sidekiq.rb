@@ -49,13 +49,16 @@ module Yabeda
       # Metrics not specific for current Sidekiq process, but representing state of the whole Sidekiq installation (queues, processes, etc)
       # You can opt-out from collecting these by setting YABEDA_SIDEKIQ_COLLECT_CLUSTER_METRICS to falsy value (+no+ or +false+)
       if config.collect_cluster_metrics # defaults to +::Sidekiq.server?+
-        gauge     :jobs_waiting_count,   tags: %i[queue], aggregation: :most_recent, comment: "The number of jobs waiting to process in sidekiq."
-        gauge     :active_workers_count, tags: [],        aggregation: :most_recent, comment: "The number of currently running machines with sidekiq workers."
-        gauge     :jobs_scheduled_count, tags: [],        aggregation: :most_recent, comment: "The number of jobs scheduled for later execution."
-        gauge     :jobs_retry_count,     tags: [],        aggregation: :most_recent, comment: "The number of failed jobs waiting to be retried"
-        gauge     :jobs_dead_count,      tags: [],        aggregation: :most_recent, comment: "The number of jobs exceeded their retry count."
-        gauge     :active_processes,     tags: [],        aggregation: :most_recent, comment: "The number of active Sidekiq worker processes."
-        gauge     :queue_latency,        tags: %i[queue], aggregation: :most_recent,
+        retry_count_tags = config.retries_segmented_by_queue ? %i[queue] : []
+
+        gauge     :jobs_waiting_count,   tags: %i[queue],        aggregation: :most_recent, comment: "The number of jobs waiting to process in sidekiq."
+        gauge     :active_workers_count, tags: [],               aggregation: :most_recent,
+                                         comment: "The number of currently running machines with sidekiq workers."
+        gauge     :jobs_scheduled_count, tags: [],               aggregation: :most_recent, comment: "The number of jobs scheduled for later execution."
+        gauge     :jobs_retry_count,     tags: retry_count_tags, aggregation: :most_recent, comment: "The number of failed jobs waiting to be retried"
+        gauge     :jobs_dead_count,      tags: [],               aggregation: :most_recent, comment: "The number of jobs exceeded their retry count."
+        gauge     :active_processes,     tags: [],               aggregation: :most_recent, comment: "The number of active Sidekiq worker processes."
+        gauge     :queue_latency,        tags: %i[queue],        aggregation: :most_recent,
                                          comment: "The queue latency, the difference in seconds since the oldest job in the queue was enqueued"
       end
 
@@ -73,21 +76,22 @@ module Yabeda
         sidekiq_jobs_scheduled_count.set({}, stats.scheduled_size)
         sidekiq_jobs_dead_count.set({}, stats.dead_size)
         sidekiq_active_processes.set({}, stats.processes_size)
-        sidekiq_jobs_retry_count.set({}, stats.retry_size)
 
         ::Sidekiq::Queue.all.each do |queue|
           sidekiq_queue_latency.set({ queue: queue.name }, queue.latency)
         end
 
-        # That is quite slow if your retry set is large
-        # I don't want to enable it by default
-        # retries_by_queues =
-        #     ::Sidekiq::RetrySet.new.each_with_object(Hash.new(0)) do |job, cntr|
-        #       cntr[job["queue"]] += 1
-        #     end
-        # retries_by_queues.each do |queue, count|
-        #   sidekiq_jobs_retry_count.set({ queue: queue }, count)
-        # end
+        if config.retries_segmented_by_queue
+          retries_by_queues =
+            ::Sidekiq::RetrySet.new.each_with_object(Hash.new(0)) do |job, cntr|
+              cntr[job["queue"]] += 1
+            end
+          retries_by_queues.each do |queue, count|
+            sidekiq_jobs_retry_count.set({ queue: queue }, count)
+          end
+        else
+          sidekiq_jobs_retry_count.set({}, stats.retry_size)
+        end
       end
     end
 
