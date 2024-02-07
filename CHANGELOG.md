@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.11.0 - 2024-02-07
+
+### Added
+
+- `retries_segmented_by_queue` configuration setting to allow segmentation of retry count by queue.
+
+  It is disabled by default as it requires to iterate over all jobs in the retry set and may be very slow if number of retries is huge.
+
+  Pull request [#32](https://github.com/yabeda-rb/yabeda-sidekiq/pull/32) by [@SxDx]
+
 ## 0.10.0 - 2022-10-25
 
 ### Added
@@ -119,3 +129,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 [@asusikov]: https://github.com/asusikov "Alexander Susikov"
 [@mrexox]: https://github.com/mrexox "Valentine Kiselev"
 [@LukinEgor]: https://github.com/LukinEgor "Egor Lukin"
+[@SxDx]: https://github.com/SxDx "René Koller"
