@@ -33,8 +33,10 @@ end
 class FailingPlainJob
   include Sidekiq::Worker
 
+  SpecialError = Class.new(StandardError)
+
   def perform(*_args)
-    raise "Badaboom"
+    raise SpecialError, "Badaboom"
   end
 end
 
@@ -47,9 +49,11 @@ class SampleActiveJob < ActiveJob::Base
 end
 
 class FailingActiveJob < ActiveJob::Base
+  SpecialError = Class.new(StandardError)
+
   self.queue_adapter = :Sidekiq
   def perform(*_args)
-    raise "Boom"
+    raise SpecialError, "Boom"
   end
 end
 
