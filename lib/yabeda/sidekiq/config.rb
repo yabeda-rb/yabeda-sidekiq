@@ -20,6 +20,9 @@ module Yabeda
       # Retries are tracked by default as a single metric. If you want to track them separately for each queue, set this to +true+
       # Disabled by default because it is quite slow if the retry set is large
       attr_config retries_segmented_by_queue: false
+
+      # If set to a symbol or string, a label will be added to the sidekiq_jobs_failed_total metric with the error class name
+      attr_config label_for_error_class_on_sidekiq_jobs_failed: false
     end
   end
 end

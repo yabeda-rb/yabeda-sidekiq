@@ -23,6 +23,84 @@ RSpec.describe Yabeda::Sidekiq do
         )
     end
 
+    context "when label_for_error_class_on_sidekiq_jobs_failed is set to a Symbol" do
+      around do |example|
+        old_value = described_class.config.label_for_error_class_on_sidekiq_jobs_failed
+        described_class.config.label_for_error_class_on_sidekiq_jobs_failed = :my_error_label
+
+        example.run
+
+        described_class.config.label_for_error_class_on_sidekiq_jobs_failed = old_value
+      end
+
+      it "counts enqueues and uses the specified label for the error class", sidekiq: :inline do
+        expect do
+          SamplePlainJob.perform_async
+          SamplePlainJob.perform_async
+          begin
+            FailingPlainJob.perform_async
+          rescue StandardError
+            nil
+          end
+        end.to \
+          increment_yabeda_counter(Yabeda.sidekiq.jobs_failed_total).with(
+            { queue: "default", worker: "FailingPlainJob", my_error_label: "FailingPlainJob::SpecialError" } => 1,
+          )
+      end
+    end
+
+    context "when label_for_error_class_on_sidekiq_jobs_failed is set to a String" do
+      around do |example|
+        old_value = described_class.config.label_for_error_class_on_sidekiq_jobs_failed
+        described_class.config.label_for_error_class_on_sidekiq_jobs_failed = "my-error-label"
+
+        example.run
+
+        described_class.config.label_for_error_class_on_sidekiq_jobs_failed = old_value
+      end
+
+      it "counts failures using the specified label for the error class", sidekiq: :inline do
+        expect do
+          SamplePlainJob.perform_async
+          SamplePlainJob.perform_async
+          begin
+            FailingPlainJob.perform_async
+          rescue StandardError
+            nil
+          end
+        end.to \
+          increment_yabeda_counter(Yabeda.sidekiq.jobs_failed_total).with(
+            { queue: "default", worker: "FailingPlainJob", "my-error-label" => "FailingPlainJob::SpecialError" } => 1,
+          )
+      end
+    end
+
+    context "when label_for_error_class_on_sidekiq_jobs_failed is set to true" do
+      around do |example|
+        old_value = described_class.config.label_for_error_class_on_sidekiq_jobs_failed
+        described_class.config.label_for_error_class_on_sidekiq_jobs_failed = true
+
+        example.run
+
+        described_class.config.label_for_error_class_on_sidekiq_jobs_failed = old_value
+      end
+
+      it "counts enqueues and uses the default label for the error class", sidekiq: :inline do
+        expect do
+          SamplePlainJob.perform_async
+          SamplePlainJob.perform_async
+          begin
+            FailingPlainJob.perform_async
+          rescue StandardError
+            nil
+          end
+        end.to \
+          increment_yabeda_counter(Yabeda.sidekiq.jobs_failed_total).with(
+            { queue: "default", worker: "FailingPlainJob", "sidekiq_jobs_failed_error_class" => "FailingPlainJob::SpecialError" } => 1,
+          )
+      end
+    end
+
     describe "re-routing jobs by middleware" do
       around do |example|
         add_reroute_jobs_middleware
@@ -97,6 +175,84 @@ RSpec.describe Yabeda::Sidekiq do
             increment_yabeda_counter(Yabeda.sidekiq.jobs_rerouted_total).with(
               { from_queue: "default", to_queue: "rerouted_queue", worker: "SampleActiveJob" } => 1,
             )
+      end
+    end
+
+    context "when label_for_error_class_on_sidekiq_jobs_failed is set to a Symbol" do
+      around do |example|
+        old_value = described_class.config.label_for_error_class_on_sidekiq_jobs_failed
+        described_class.config.label_for_error_class_on_sidekiq_jobs_failed = :my_error_label
+
+        example.run
+
+        described_class.config.label_for_error_class_on_sidekiq_jobs_failed = old_value
+      end
+
+      it "counts enqueues and uses the specified label for the error class", sidekiq: :inline do
+        expect do
+          SampleActiveJob.perform_later
+          SampleActiveJob.perform_later
+          begin
+            FailingActiveJob.perform_later
+          rescue StandardError
+            nil
+          end
+        end.to \
+          increment_yabeda_counter(Yabeda.sidekiq.jobs_failed_total).with(
+            { queue: "default", worker: "FailingActiveJob", my_error_label: "FailingActiveJob::SpecialError" } => 1,
+          )
+      end
+    end
+
+    context "when label_for_error_class_on_sidekiq_jobs_failed is set to a String" do
+      around do |example|
+        old_value = described_class.config.label_for_error_class_on_sidekiq_jobs_failed
+        described_class.config.label_for_error_class_on_sidekiq_jobs_failed = "my-error-label"
+
+        example.run
+
+        described_class.config.label_for_error_class_on_sidekiq_jobs_failed = old_value
+      end
+
+      it "counts failures using the specified label for the error class", sidekiq: :inline do
+        expect do
+          SampleActiveJob.perform_later
+          SampleActiveJob.perform_later
+          begin
+            FailingActiveJob.perform_later
+          rescue StandardError
+            nil
+          end
+        end.to \
+          increment_yabeda_counter(Yabeda.sidekiq.jobs_failed_total).with(
+            { queue: "default", worker: "FailingActiveJob", "my-error-label" => "FailingActiveJob::SpecialError" } => 1,
+          )
+      end
+    end
+
+    context "when label_for_error_class_on_sidekiq_jobs_failed is set to true" do
+      around do |example|
+        old_value = described_class.config.label_for_error_class_on_sidekiq_jobs_failed
+        described_class.config.label_for_error_class_on_sidekiq_jobs_failed = true
+
+        example.run
+
+        described_class.config.label_for_error_class_on_sidekiq_jobs_failed = old_value
+      end
+
+      it "counts enqueues and uses the default label for the error class", sidekiq: :inline do
+        expect do
+          SampleActiveJob.perform_later
+          SampleActiveJob.perform_later
+          begin
+            FailingActiveJob.perform_later
+          rescue StandardError
+            nil
+          end
+        end.to \
+          increment_yabeda_counter(Yabeda.sidekiq.jobs_failed_total).with(
+            { queue: "default", worker: "FailingActiveJob", "sidekiq_jobs_failed_error_class" => "FailingActiveJob::SpecialError" } => 1,
+          )
       end
     end
 
