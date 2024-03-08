@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.12.0 - 2024-03-08
+
+### Added
+
+- Optional capture of error class for failed jobs counter.
+
+  Set `label_for_error_class_on_sidekiq_jobs_failed` to `true` to add `error` label to `sidekiq_jobs_failed_total` metric.
+
+  Pull request [#34](https://github.com/yabeda-rb/yabeda-sidekiq/pull/34) by [@niborg]
+
+### Changed
+
+- Stop including development-related files into packaged gem to avoid confusing users or software tools. [@Envek]
+
 ## 0.11.0 - 2024-02-07
 
 ### Added
@@ -130,3 +144,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 [@mrexox]: https://github.com/mrexox "Valentine Kiselev"
 [@LukinEgor]: https://github.com/LukinEgor "Egor Lukin"
 [@SxDx]: https://github.com/SxDx "René Koller"
+[@niborg]: https://github.com/niborg "Nick Knipe"
