@@ -253,9 +253,9 @@ RSpec.describe Yabeda::Sidekiq do
 
     it "collects named queues stats", :aggregate_failures do
       expect { Yabeda.collect! }.to \
-        update_yabeda_gauge(Yabeda.sidekiq.jobs_retry_count).with(1).and \
-          update_yabeda_gauge(Yabeda.sidekiq.jobs_dead_count).with(3).and \
-            update_yabeda_gauge(Yabeda.sidekiq.jobs_scheduled_count).with(2)
+        update_yabeda_gauge(Yabeda.sidekiq.jobs_retry_count).with({} => 1).and \
+          update_yabeda_gauge(Yabeda.sidekiq.jobs_dead_count).with({} => 3).and \
+            update_yabeda_gauge(Yabeda.sidekiq.jobs_scheduled_count).with({} => 2)
     end
 
     it "measures maximum runtime of currently running jobs", sidekiq: :inline do
