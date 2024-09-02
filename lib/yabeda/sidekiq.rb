@@ -53,15 +53,30 @@ module Yabeda
       if config.collect_cluster_metrics # defaults to +::Sidekiq.server?+
         retry_count_tags = config.retries_segmented_by_queue ? %i[queue] : []
 
-        gauge     :jobs_waiting_count,   tags: %i[queue],        aggregation: :most_recent, comment: "The number of jobs waiting to process in sidekiq."
-        gauge     :active_workers_count, tags: [],               aggregation: :most_recent,
-                                         comment: "The number of currently running machines with sidekiq workers."
-        gauge     :jobs_scheduled_count, tags: [],               aggregation: :most_recent, comment: "The number of jobs scheduled for later execution."
-        gauge     :jobs_retry_count,     tags: retry_count_tags, aggregation: :most_recent, comment: "The number of failed jobs waiting to be retried"
-        gauge     :jobs_dead_count,      tags: [],               aggregation: :most_recent, comment: "The number of jobs exceeded their retry count."
-        gauge     :active_processes,     tags: [],               aggregation: :most_recent, comment: "The number of active Sidekiq worker processes."
-        gauge     :queue_latency,        tags: %i[queue],        aggregation: :most_recent,
-                                         comment: "The queue latency, the difference in seconds since the oldest job in the queue was enqueued"
+        gauge     :jobs_waiting_count,                tags: %i[queue],        aggregation: :most_recent,
+                                                      comment: "The number of jobs waiting to process in sidekiq."
+        gauge     :active_workers_count,              tags: [],               aggregation: :most_recent,
+                                                      comment: "Total number of sidekiq workers threads."
+        gauge     :busy_workers_count,                tags: [],               aggregation: :most_recent,
+                                                      comment: "Number of busy sidekiq workers threads."
+        gauge     :available_workers_count,           tags: [],               aggregation: :most_recent,
+                                                      comment: "Number of busy sidekiq workers threads."
+        gauge     :active_workers_count_per_queue,    tags: %i[queue],        aggregation: :most_recent,
+                                                      comment: "Total number of sidekiq workers threads that can process a given queue."
+        gauge     :busy_workers_count_per_queue,      tags: %i[queue],        aggregation: :most_recent,
+                                                      comment: "Number of busy sidekiq workers threads that can process a given queue."
+        gauge     :available_workers_count_per_queue, tags: %i[queue],        aggregation: :most_recent,
+                                                      comment: "Number of busy sidekiq workers threads that can process a given queue."
+        gauge     :jobs_scheduled_count,              tags: [],               aggregation: :most_recent,
+                                                      comment: "The number of jobs scheduled for later execution."
+        gauge     :jobs_retry_count,                  tags: retry_count_tags, aggregation: :most_recent,
+                                                      comment: "The number of failed jobs waiting to be retried"
+        gauge     :jobs_dead_count,                   tags: [],               aggregation: :most_recent,
+                                                      comment: "The number of jobs exceeded their retry count."
+        gauge     :active_processes,                  tags: [],               aggregation: :most_recent,
+                                                      comment: "The number of active Sidekiq worker processes."
+        gauge     :queue_latency,                     tags: %i[queue],        aggregation: :most_recent,
+                                                      comment: "The queue latency, the difference in seconds since the oldest job in the queue was enqueued"
       end
 
       collect do
@@ -70,14 +85,35 @@ module Yabeda
         next unless config.collect_cluster_metrics
 
         stats = ::Sidekiq::Stats.new
-
         stats.queues.each do |k, v|
           sidekiq_jobs_waiting_count.set({ queue: k }, v)
         end
-        sidekiq_active_workers_count.set({}, stats.workers_size)
         sidekiq_jobs_scheduled_count.set({}, stats.scheduled_size)
         sidekiq_jobs_dead_count.set({}, stats.dead_size)
         sidekiq_active_processes.set({}, stats.processes_size)
+
+        process_data = { active: 0, busy: 0, available: 0 }
+        queue_data = {}
+        ::Sidekiq::ProcessSet.new.each do |process|
+          process_data[:active] += process['concurrency']
+          process_data[:busy] += process['busy']
+          process_data[:available] += process['concurrency'] - process['busy']
+          process['queues'].each do |queue|
+            queue_data[queue] ||= { active: 0, busy: 0, available: 0 }
+            queue_data[queue][:active] += process['concurrency']
+            queue_data[queue][:busy] += process['busy']
+            queue_data[queue][:available] += process['concurrency'] - process['busy']
+          end
+        end
+        sidekiq_active_workers_count.set({}, process_data[:active])
+        sidekiq_busy_workers_count.set({}, process_data[:busy])
+        sidekiq_available_workers_count.set({}, process_data[:available])
+        queue_data.each do |queue, data|
+          labels = { queue: queue }
+          sidekiq_active_workers_count_per_queue.set(labels, data[:active])
+          sidekiq_busy_workers_count_per_queue.set(labels, data[:busy])
+          sidekiq_available_workers_count_per_queue.set(labels, data[:available])
+        end
 
         ::Sidekiq::Queue.all.each do |queue|
           sidekiq_queue_latency.set({ queue: queue.name }, queue.latency)
