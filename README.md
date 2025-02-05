@@ -66,9 +66,9 @@ By default all sidekiq worker processes (servers) collects global metrics about 
 
 Metrics collected where jobs are being pushed to queues (everywhere):
 
-- Total number of enqueued jobs: `sidekiq_jobs_enqueued_total_count` (segmented by `queue` and `worker` class name)
+- Total number of enqueued jobs: `sidekiq_jobs_enqueued_total` (segmented by `queue` and `worker` class name)
 
-- Total number of rerouted jobs: `sidekiq_jobs_rerouted_total_count` (segmented by origin queue `from_queue`, rerouted queue `to_queue`, and `worker` class name).
+- Total number of rerouted jobs: `sidekiq_jobs_rerouted_total` (segmented by origin queue `from_queue`, rerouted queue `to_queue`, and `worker` class name).
 
   Rerouted jobs are jobs that on enqueue were pushed to different queue from the one specified in worker's `sidekiq_options`, most probably by some middleware.
 
