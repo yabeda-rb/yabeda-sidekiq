@@ -233,6 +233,13 @@ RSpec.describe Yabeda::Sidekiq do
           OpenStruct.new({ name: "mailers", latency: 0 }),
         ],
       )
+      allow(Sidekiq::ProcessSet).to receive(:new).and_return(
+        [
+          OpenStruct.new({ concurrency: 2, busy: 1, queues: ['default', 'low'] }),
+          OpenStruct.new({ concurrency: 2, busy: 0, queues: ['default', 'low'] }),
+          OpenStruct.new({ concurrency: 6, busy: 3, queues: ['medium'] }),
+        ]
+      )
     end
 
     it "collects queue latencies" do
@@ -253,9 +260,31 @@ RSpec.describe Yabeda::Sidekiq do
 
     it "collects named queues stats", :aggregate_failures do
       expect { Yabeda.collect! }.to \
-        update_yabeda_gauge(Yabeda.sidekiq.jobs_retry_count).with(1).and \
-          update_yabeda_gauge(Yabeda.sidekiq.jobs_dead_count).with(3).and \
-            update_yabeda_gauge(Yabeda.sidekiq.jobs_scheduled_count).with(2)
+        update_yabeda_gauge(Yabeda.sidekiq.jobs_retry_count).with({} => 1).and \
+          update_yabeda_gauge(Yabeda.sidekiq.jobs_dead_count).with({} => 3).and \
+            update_yabeda_gauge(Yabeda.sidekiq.jobs_scheduled_count).with({} => 2)
+    end
+
+    it "collects process metrics" do
+      expect { Yabeda.collect! }.to \
+        update_yabeda_gauge(Yabeda.sidekiq.active_workers_count).with({} => 10).and \
+          update_yabeda_gauge(Yabeda.sidekiq.busy_workers_count).with({} => 4).and \
+            update_yabeda_gauge(Yabeda.sidekiq.available_workers_count).with({} => 6).and \
+              update_yabeda_gauge(Yabeda.sidekiq.active_workers_count_per_queue).with(
+                { queue: 'default' } => 4,
+                { queue: 'low' } => 4,
+                { queue: 'medium' } => 6
+              ).and \
+                update_yabeda_gauge(Yabeda.sidekiq.busy_workers_count_per_queue).with(
+                  { queue: 'default' } => 1,
+                  { queue: 'low' } => 1,
+                  { queue: 'medium' } => 3
+                ).and \
+                  update_yabeda_gauge(Yabeda.sidekiq.available_workers_count_per_queue).with(
+                    { queue: 'default' } => 3,
+                    { queue: 'low' } => 3,
+                    { queue: 'medium' } => 3
+                  )
     end
 
     it "measures maximum runtime of currently running jobs", sidekiq: :inline do

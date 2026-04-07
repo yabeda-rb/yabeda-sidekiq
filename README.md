@@ -58,7 +58,12 @@ Metrics representing state of the whole Sidekiq installation (queues, processes,
  - Number of jobs in retry set: `sidekiq_jobs_retry_count`
  - Number of jobs in dead set (“morgue”): `sidekiq_jobs_dead_count`
  - Active processes count: `sidekiq_active_processes`
- - Active servers count: `sidekiq_active_workers_count`
+ - Active worker threads count: `sidekiq_active_workers_count`
+ - Busy worker threads count: `sidekiq_busy_workers_count`
+ - Available worker threads count: `sidekiq_available_workers_count`
+ - Active worker threads count per queue: `sidekiq_active_workers_count_per_queue` (segmented by queue)
+ - Busy worker threads count per queue: `sidekiq_busy_workers_count_per_queue` (segmented by queue)
+ - Available worker threads count per queue: `sidekiq_available_workers_count_per_queue` (segmented by queue)
 
 By default all sidekiq worker processes (servers) collects global metrics about whole Sidekiq installation. This can be overridden by setting `collect_cluster_metrics` config key to `true` for non-Sidekiq processes or to `false` for Sidekiq processes (e.g. by setting `YABEDA_SIDEKIQ_COLLECT_CLUSTER_METRICS` env variable to `no`, see other methods in [anyway_config] docs).
 
