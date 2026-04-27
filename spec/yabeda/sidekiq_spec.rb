@@ -243,6 +243,33 @@ RSpec.describe Yabeda::Sidekiq do
         )
     end
 
+    context "when filter_queues_by_current_process is enabled" do
+      around do |example|
+        old_value = described_class.config.filter_queues_by_current_process
+        described_class.config.filter_queues_by_current_process = true
+        example.run
+        described_class.config.filter_queues_by_current_process = old_value
+      end
+
+      before do
+        allow(::Sidekiq.default_configuration).to receive(:queues).and_return(["default", "default"])
+      end
+
+      it "only collects queue latency for queues used by the current process" do
+        expect { Yabeda.collect! }.to \
+          update_yabeda_gauge(Yabeda.sidekiq.queue_latency).with(
+            { queue: "default" } => 0.5,
+          )
+      end
+
+      it "does not collect queue latency for queues not in the current process" do
+        expect { Yabeda.collect! }.not_to \
+          update_yabeda_gauge(Yabeda.sidekiq.queue_latency).with(
+            { queue: "mailers" } => anything,
+          )
+      end
+    end
+
     it "collects queue sizes" do
       expect { Yabeda.collect! }.to \
         update_yabeda_gauge(Yabeda.sidekiq.jobs_waiting_count).with(

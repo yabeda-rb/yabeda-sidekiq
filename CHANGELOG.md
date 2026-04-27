@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Added
+
+- `filter_queues_by_current_process` configuration setting to collect queue latency only for queues configured in the current Sidekiq process.
+
+  When enabled, uses `Sidekiq.default_configuration.queues` to determine which queues the process listens to, skipping all others. Useful when running multiple Sidekiq processes with different queue assignments and you want each process to report only its own queue latencies.
+
+  [@sobrinho]
+
 ## 0.12.0 - 2024-03-08
 
 ### Added
@@ -145,3 +153,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 [@LukinEgor]: https://github.com/LukinEgor "Egor Lukin"
 [@SxDx]: https://github.com/SxDx "René Koller"
 [@niborg]: https://github.com/niborg "Nick Knipe"
+[@sobrinho]: https://github.com/sobrinho "Gabriel Sobrinho"
