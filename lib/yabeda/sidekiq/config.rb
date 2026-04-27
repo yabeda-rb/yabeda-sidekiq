@@ -23,6 +23,10 @@ module Yabeda
 
       # If set to true, an `:error` label will be added with name of the error class to all failed jobs
       attr_config label_for_error_class_on_sidekiq_jobs_failed: false
+
+      # If set to true, queue latency will only be collected for queues configured in the current Sidekiq process
+      # (via Sidekiq.default_configuration.queues) instead of all queues in the installation
+      attr_config filter_queues_by_current_process: false
     end
   end
 end

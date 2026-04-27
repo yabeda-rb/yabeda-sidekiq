@@ -79,7 +79,14 @@ module Yabeda
         sidekiq_jobs_dead_count.set({}, stats.dead_size)
         sidekiq_active_processes.set({}, stats.processes_size)
 
-        ::Sidekiq::Queue.all.each do |queue|
+        queues_for_latency =
+          if config.filter_queues_by_current_process
+            process_queues = ::Sidekiq.default_configuration.queues.uniq
+            ::Sidekiq::Queue.all.select { |q| process_queues.include?(q.name) }
+          else
+            ::Sidekiq::Queue.all
+          end
+        queues_for_latency.each do |queue|
           sidekiq_queue_latency.set({ queue: queue.name }, queue.latency)
         end
 
