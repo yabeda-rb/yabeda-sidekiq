@@ -47,6 +47,9 @@ Metrics representing state of current Sidekiq worker process and stats of execut
  - Time of job run: `sidekiq_job_runtime` (seconds per job execution, segmented by queue and class name)
  - Time of the job latency `sidekiq_job_latency` (the difference in seconds since the enqueuing until running job)
  - Maximum runtime of currently executing jobs: `sidekiq_running_job_runtime` (useful for detection of hung jobs, segmented by queue and class name)
+ - Number of threads (configured concurrency) of each worker process: `sidekiq_process_threads` (segmented by `hostname`, `pid`, and the comma-joined list of `queues` the process pulls jobs from)
+
+   Because this metric is segmented by `pid`, every restarted or redeployed worker produces a new time series. When a process disappears (its Sidekiq heartbeat expires after ~60 seconds) its series simply stops updating rather than being reset, so treat a missing/stale series as “process gone” (cross-reference `sidekiq_active_processes`) and keep label cardinality in mind on clusters that deploy frequently.
 
 ### Global cluster-wide metrics
 

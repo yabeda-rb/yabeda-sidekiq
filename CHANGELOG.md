@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+### Added
+
+- `sidekiq_process_threads` gauge reporting the configured thread count (concurrency) of each Sidekiq worker process.
+
+  Unlike `sidekiq_active_workers_count` (which reports a single cluster-wide total of busy threads), this metric is segmented per process via `hostname`, `pid`, and a comma-joined `queues` label listing the queues the process pulls jobs from.
+
 ## 0.12.0 - 2024-03-08
 
 ### Added

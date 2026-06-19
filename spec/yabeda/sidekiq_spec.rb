@@ -233,6 +233,12 @@ RSpec.describe Yabeda::Sidekiq do
           OpenStruct.new({ name: "mailers", latency: 0 }),
         ],
       )
+      allow(Sidekiq::ProcessSet).to receive(:new).and_return(
+        [
+          OpenStruct.new(hostname: "host-1", pid: 100, concurrency: 5, queues: %w[mailers default]),
+          OpenStruct.new(hostname: "host-2", pid: 200, concurrency: 10, queues: %w[low]),
+        ],
+      )
     end
 
     it "collects queue latencies" do
@@ -256,6 +262,14 @@ RSpec.describe Yabeda::Sidekiq do
         update_yabeda_gauge(Yabeda.sidekiq.jobs_retry_count).with(1).and \
           update_yabeda_gauge(Yabeda.sidekiq.jobs_dead_count).with(3).and \
             update_yabeda_gauge(Yabeda.sidekiq.jobs_scheduled_count).with(2)
+    end
+
+    it "collects per-process thread counts segmented by host, pid, and queues" do
+      expect { Yabeda.collect! }.to \
+        update_yabeda_gauge(Yabeda.sidekiq.process_threads).with(
+          { hostname: "host-1", pid: 100, queues: "default,mailers" } => 5,
+          { hostname: "host-2", pid: 200, queues: "low" } => 10,
+        )
     end
 
     it "measures maximum runtime of currently running jobs", sidekiq: :inline do
