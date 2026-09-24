@@ -21,6 +21,14 @@ module Yabeda
       # Disabled by default because it is quite slow if the retry set is large
       attr_config retries_segmented_by_queue: false
 
+      # Dead jobs are tracked by default as a single metric. If you want to track them separately for each queue, set this to +true+
+      # Disabled by default because it is quite slow if the dead set is large
+      attr_config dead_segmented_by_queue: false
+
+      # Scheduled jobs are tracked by default as a single metric. If you want to track them separately for each queue, set this to +true+
+      # Disabled by default because it is quite slow if the scheduled set is large
+      attr_config scheduled_segmented_by_queue: false
+
       # If set to true, an `:error` label will be added with name of the error class to all failed jobs
       attr_config label_for_error_class_on_sidekiq_jobs_failed: false
     end
