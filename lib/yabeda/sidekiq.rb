@@ -22,6 +22,7 @@ module Yabeda
 
     Yabeda.configure do
       config = ::Yabeda::Sidekiq.config
+      buckets = config.buckets || LONG_RUNNING_JOB_RUNTIME_BUCKETS
 
       group :sidekiq
 
@@ -41,11 +42,11 @@ module Yabeda
         histogram :job_latency, comment: "The job latency, the difference in seconds between enqueued and running time",
                                 unit: :seconds, per: :job,
                                 tags: %i[queue worker],
-                                buckets: LONG_RUNNING_JOB_RUNTIME_BUCKETS
+                                buckets: buckets
         histogram :job_runtime, comment: "A histogram of the job execution time.",
                                 unit: :seconds, per: :job,
                                 tags: %i[queue worker],
-                                buckets: LONG_RUNNING_JOB_RUNTIME_BUCKETS
+                                buckets: buckets
       end
 
       # Metrics not specific for current Sidekiq process, but representing state of the whole Sidekiq installation (queues, processes, etc)

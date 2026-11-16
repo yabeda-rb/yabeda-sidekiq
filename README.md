@@ -105,6 +105,7 @@ Configuration is handled by [anyway_config] gem. With it you can load settings f
 | `declare_process_metrics`                      | boolean | Enabled in Sidekiq worker processes, disabled otherwise | Declare metrics that are only tracked inside worker process even outside of them. Useful for multiprocess metric collection.                       |
 | `retries_segmented_by_queue`                   | boolean | Disabled                                                | Defines wheter retries are segemented by queue or reported as a single metric                                                                      |
 | `label_for_error_class_on_sidekiq_jobs_failed` | boolean | Disabled                                                | Defines whether `error` label should be added to `sidekiq_jobs_failed_total` metric.                                                               |
+| `buckets`                                      | array   | `LONG_RUNNING_JOB_RUNTIME_BUCKETS`                      | Set buckets to be used by histogram metrics                                                                                                        |
 
 # Roadmap (TODO or Help wanted)
 
