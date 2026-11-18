@@ -59,6 +59,8 @@ module Yabeda
         gauge     :active_processes,     tags: [],                   aggregation: :most_recent, comment: "The number of active Sidekiq worker processes."
         gauge     :queue_latency,        tags: %i[queue],            aggregation: :most_recent,
                                          comment: "The queue latency, the difference in seconds since the oldest job in the queue was enqueued"
+        gauge     :process_threads,      tags: %i[hostname pid queues], aggregation: :most_recent,
+                                         comment: "Configured thread count (concurrency) of each Sidekiq worker process, by hostname, pid, and queues."
       end
 
       collect do
@@ -74,6 +76,20 @@ module Yabeda
         end
         sidekiq_active_workers_count.set({}, stats.workers_size)
         sidekiq_active_processes.set({}, stats.processes_size)
+
+        ::Sidekiq::ProcessSet.new.each do |process|
+          sidekiq_process_threads.set(
+            {
+              hostname: process["hostname"],
+              pid: process["pid"],
+              # Read the +queues+ attribute rather than calling +process.queues+: the latter is
+              # not defined on Sidekiq < 6.2.2, while this attribute is present in the heartbeat info
+              # on every supported version (capsules-derived and de-duplicated since Sidekiq 8.0.8).
+              queues: Array(process["queues"]).sort.join(","),
+            },
+            process["concurrency"],
+          )
+        end
 
         ::Sidekiq::Queue.all.each do |queue|
           sidekiq_queue_latency.set({ queue: queue.name }, queue.latency)
