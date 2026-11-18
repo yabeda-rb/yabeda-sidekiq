@@ -7,7 +7,7 @@ module Yabeda
       # See https://github.com/mperham/sidekiq/discussions/4971
       JOB_RECORD_CLASS = defined?(::Sidekiq::JobRecord) ? ::Sidekiq::JobRecord : ::Sidekiq::Job
 
-      # rubocop: disable Metrics/AbcSize, Metrics/MethodLength:
+      # rubocop: disable Metrics/AbcSize, Metrics/MethodLength
       def call(worker, job, queue)
         custom_tags = Yabeda::Sidekiq.custom_tags(worker, job).to_h
         labels = Yabeda::Sidekiq.labelize(worker, job, queue).merge(custom_tags)
@@ -31,7 +31,7 @@ module Yabeda
           Yabeda::Sidekiq.jobs_started_at[labels].delete(job["jid"])
         end
       end
-      # rubocop: enable Metrics/AbcSize, Metrics/MethodLength:
+      # rubocop: enable Metrics/AbcSize, Metrics/MethodLength
 
       private
 
