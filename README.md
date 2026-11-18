@@ -57,9 +57,9 @@ Metrics representing state of the whole Sidekiq installation (queues, processes,
 
  - Number of jobs in queues: `sidekiq_jobs_waiting_count` (segmented by queue)
  - Time of the queue latency `sidekiq_queue_latency` (the difference in seconds since the oldest job in the queue was enqueued)
- - Number of scheduled jobs:`sidekiq_jobs_scheduled_count`
- - Number of jobs in retry set: `sidekiq_jobs_retry_count`
- - Number of jobs in dead set (“morgue”): `sidekiq_jobs_dead_count`
+ - Number of scheduled jobs:`sidekiq_jobs_scheduled_count` (optionally segmented by queue)
+ - Number of jobs in retry set: `sidekiq_jobs_retry_count` (optionally segmented by queue)
+ - Number of jobs in dead set (“morgue”): `sidekiq_jobs_dead_count` (optionally segmented by queue)
  - Active processes count: `sidekiq_active_processes`
  - Active servers count: `sidekiq_active_workers_count`
 
@@ -106,14 +106,16 @@ Configuration is handled by [anyway_config] gem. With it you can load settings f
 |------------------------------------------------|---------|---------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
 | `collect_cluster_metrics`                      | boolean | Enabled in Sidekiq worker processes, disabled otherwise | Defines whether this Ruby process should collect and expose metrics representing state of the whole Sidekiq installation (queues, processes, etc). |
 | `declare_process_metrics`                      | boolean | Enabled in Sidekiq worker processes, disabled otherwise | Declare metrics that are only tracked inside worker process even outside of them. Useful for multiprocess metric collection.                       |
-| `retries_segmented_by_queue`                   | boolean | Disabled                                                | Defines wheter retries are segemented by queue or reported as a single metric                                                                      |
+| `retries_segmented_by_queue`                   | boolean | Disabled                                                | Defines whether retries are segmented by queue or reported as a single metric. Iterates the retry set.                                             |
+| `dead_segmented_by_queue`                      | boolean | Disabled                                                | Defines whether dead jobs are segmented by queue or reported as a single metric. Iterates the dead set.                                            |
+| `scheduled_segmented_by_queue`                 | boolean | Disabled                                                | Defines whether scheduled jobs are segmented by queue or reported as a single metric. Iterates the scheduled set.                                  |
 | `label_for_error_class_on_sidekiq_jobs_failed` | boolean | Disabled                                                | Defines whether `error` label should be added to `sidekiq_jobs_failed_total` metric.                                                               |
+| `buckets`                                      | array   | `[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60, 120, 300, 1800, 3600, 21600]` | Buckets for `sidekiq_job_latency` and `sidekiq_job_runtime` histograms (in seconds)                                                 |
+
+When any of the `*_segmented_by_queue` settings is enabled, that gauge is published for every known
+Sidekiq queue plus any queue still present in the set, so emptied queues report `0` instead of disappearing.
 
 # Roadmap (TODO or Help wanted)
-
- - Implement optional segmentation of schedule/dead sets
-
-   It should be disabled by default as it requires to iterate over all jobs in sets and may be very slow on large sets.
 
  - Maybe add some hooks for ease of plugging in metrics for myriads of Sidekiq plugins?
 

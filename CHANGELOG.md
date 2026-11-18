@@ -13,6 +13,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
   Unlike `sidekiq_active_workers_count` (which reports a single cluster-wide total of busy threads), this metric is segmented per process via `hostname`, `pid`, and a comma-joined `queues` label listing the queues the process pulls jobs from.
 
+- Optional segmentation of dead and scheduled sets by queue, matching `retries_segmented_by_queue`.
+
+  Set `dead_segmented_by_queue` or `scheduled_segmented_by_queue` to `true` to add a `queue` label to
+  `sidekiq_jobs_dead_count` / `sidekiq_jobs_scheduled_count`. Disabled by default because iterating
+  those sets can be slow when they are large.
+
+- When a set is segmented by queue, gauges are also published as `0` for every known Sidekiq queue
+  so a queue that empties does not leave a stale series.
+
 ## 0.12.0 - 2024-03-08
 
 ### Added
