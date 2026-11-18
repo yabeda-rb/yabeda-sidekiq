@@ -11,18 +11,12 @@ require "yabeda/sidekiq/config"
 
 module Yabeda
   module Sidekiq
-    LONG_RUNNING_JOB_RUNTIME_BUCKETS = [
-      0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, # standard (from Prometheus)
-      30, 60, 120, 300, 1800, 3600, 21_600, # Sidekiq tasks may be very long-running
-    ].freeze
-
     def self.config
       @config ||= Config.new
     end
 
     Yabeda.configure do
       config = ::Yabeda::Sidekiq.config
-      buckets = config.buckets || LONG_RUNNING_JOB_RUNTIME_BUCKETS
 
       group :sidekiq
 
@@ -42,11 +36,11 @@ module Yabeda
         histogram :job_latency, comment: "The job latency, the difference in seconds between enqueued and running time",
                                 unit: :seconds, per: :job,
                                 tags: %i[queue worker],
-                                buckets: buckets
+                                buckets: config.buckets
         histogram :job_runtime, comment: "A histogram of the job execution time.",
                                 unit: :seconds, per: :job,
                                 tags: %i[queue worker],
-                                buckets: buckets
+                                buckets: config.buckets
       end
 
       # Metrics not specific for current Sidekiq process, but representing state of the whole Sidekiq installation (queues, processes, etc)
