@@ -110,8 +110,7 @@ Configuration is handled by [anyway_config] gem. With it you can load settings f
 | `buckets`                                      | array   | `[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60, 120, 300, 1800, 3600, 21600]` | Buckets for `sidekiq_job_latency` and `sidekiq_job_runtime` histograms (in seconds)                                                 |
 
 When any of the `*_segmented_by_queue` settings is enabled, that gauge is published for every known
-Sidekiq queue (from `Sidekiq::Stats#queues` and `Sidekiq::Queue.all`) plus any queue still present
-in the set, so emptied queues report `0` instead of disappearing.
+Sidekiq queue plus any queue still present in the set, so emptied queues report `0` instead of disappearing.
 
 # Roadmap (TODO or Help wanted)
 

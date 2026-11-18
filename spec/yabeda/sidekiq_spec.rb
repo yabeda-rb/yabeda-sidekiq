@@ -296,7 +296,7 @@ RSpec.describe Yabeda::Sidekiq do
           [{ "queue" => "default" }, { "queue" => "default" }],
         )
         allow(Sidekiq::DeadSet).to receive(:new).and_return(
-          [{ "queue" => "mailers" }],
+          [{ "queue" => "mailers" }, { "queue" => "removed_queue" }],
         )
         allow(Sidekiq::ScheduledSet).to receive(:new).and_return(
           [{ "queue" => "default" }],
@@ -318,6 +318,7 @@ RSpec.describe Yabeda::Sidekiq do
             update_yabeda_gauge(Yabeda.sidekiq.jobs_dead_count).with(
               { queue: "default" } => 0,
               { queue: "mailers" } => 1,
+              { queue: "removed_queue" } => 1,
             ).and \
               update_yabeda_gauge(Yabeda.sidekiq.jobs_scheduled_count).with(
                 { queue: "default" } => 1,
@@ -357,60 +358,10 @@ RSpec.describe Yabeda::Sidekiq do
     end
   end
 
-  describe ".counts_by_queue" do
-    it "tallies jobs by queue and skips blank queues" do
-      jobs = [
-        { "queue" => "default" },
-        { "queue" => "default" },
-        { "queue" => "mailers" },
-        { "queue" => nil },
-        { "queue" => "" },
-      ]
-
-      expect(described_class.counts_by_queue(jobs)).to eq("default" => 2, "mailers" => 1)
-    end
-  end
-
-  describe ".publish_job_set_size" do
-    it "publishes the cluster total when segmentation is disabled" do
-      expect do
-        described_class.publish_job_set_size(
-          Yabeda.sidekiq.jobs_retry_count,
-          size: 7,
-          segmented: false,
-          set: -> { raise "should not iterate the set" },
-          known_queues: %w[default],
-        )
-      end.to update_yabeda_gauge(Yabeda.sidekiq.jobs_retry_count).with(7)
-    end
-
-    it "publishes per-queue counts and zero-fills known queues" do
-      jobs = [
-        { "queue" => "default" },
-        { "queue" => "default" },
-        { "queue" => "only_in_set" },
-      ]
-
-      expect do
-        described_class.publish_job_set_size(
-          Yabeda.sidekiq.jobs_waiting_count,
-          size: 99,
-          segmented: true,
-          set: -> { jobs },
-          known_queues: %w[default mailers],
-        )
-      end.to update_yabeda_gauge(Yabeda.sidekiq.jobs_waiting_count).with(
-        { queue: "default" } => 2,
-        { queue: "mailers" } => 0,
-        { queue: "only_in_set" } => 1,
-      )
-    end
-  end
-
   def reconfigure_yabeda(configurators)
     Yabeda.reset!
     Yabeda.register_adapter(:test, Yabeda::TestAdapter.instance)
-    configurators.each { |_group, block| Yabeda.configure(&block) }
+    configurators.each { |(_group, block)| Yabeda.configure(&block) }
     Yabeda.configure!
   end
 

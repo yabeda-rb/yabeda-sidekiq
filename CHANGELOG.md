@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   those sets can be slow when they are large.
 
 - When a set is segmented by queue, gauges are also published as `0` for every known Sidekiq queue
-  (`Sidekiq::Stats#queues` and `Sidekiq::Queue.all`) so a queue that empties does not leave a stale series.
+  so a queue that empties does not leave a stale series.
 
 ## 0.12.0 - 2024-03-08
 

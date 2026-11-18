@@ -67,41 +67,35 @@ module Yabeda
         next unless config.collect_cluster_metrics
 
         stats = ::Sidekiq::Stats.new
-        queues = ::Sidekiq::Queue.all
-        stats_queues = stats.queues
-        known_queues = stats_queues.keys | queues.map(&:name)
+        queue_sizes = stats.queues
 
-        stats_queues.each do |k, v|
+        queue_sizes.each do |k, v|
           sidekiq_jobs_waiting_count.set({ queue: k }, v)
         end
         sidekiq_active_workers_count.set({}, stats.workers_size)
         sidekiq_active_processes.set({}, stats.processes_size)
 
-        queues.each do |queue|
+        ::Sidekiq::Queue.all.each do |queue|
           sidekiq_queue_latency.set({ queue: queue.name }, queue.latency)
         end
 
-        Yabeda::Sidekiq.publish_job_set_size(
-          sidekiq_jobs_retry_count,
-          size: stats.retry_size,
-          segmented: config.retries_segmented_by_queue,
-          set: -> { ::Sidekiq::RetrySet.new },
-          known_queues: known_queues,
-        )
-        Yabeda::Sidekiq.publish_job_set_size(
-          sidekiq_jobs_dead_count,
-          size: stats.dead_size,
-          segmented: config.dead_segmented_by_queue,
-          set: -> { ::Sidekiq::DeadSet.new },
-          known_queues: known_queues,
-        )
-        Yabeda::Sidekiq.publish_job_set_size(
-          sidekiq_jobs_scheduled_count,
-          size: stats.scheduled_size,
-          segmented: config.scheduled_segmented_by_queue,
-          set: -> { ::Sidekiq::ScheduledSet.new },
-          known_queues: known_queues,
-        )
+        if config.retries_segmented_by_queue
+          Yabeda::Sidekiq.set_jobs_count_by_queue(sidekiq_jobs_retry_count, ::Sidekiq::RetrySet.new, queue_sizes.keys)
+        else
+          sidekiq_jobs_retry_count.set({}, stats.retry_size)
+        end
+
+        if config.dead_segmented_by_queue
+          Yabeda::Sidekiq.set_jobs_count_by_queue(sidekiq_jobs_dead_count, ::Sidekiq::DeadSet.new, queue_sizes.keys)
+        else
+          sidekiq_jobs_dead_count.set({}, stats.dead_size)
+        end
+
+        if config.scheduled_segmented_by_queue
+          Yabeda::Sidekiq.set_jobs_count_by_queue(sidekiq_jobs_scheduled_count, ::Sidekiq::ScheduledSet.new, queue_sizes.keys)
+        else
+          sidekiq_jobs_scheduled_count.set({}, stats.scheduled_size)
+        end
       end
     end
 
@@ -150,27 +144,11 @@ module Yabeda
         end
       end
 
-      def counts_by_queue(jobs)
-        jobs.each_with_object(Hash.new(0)) do |job, counts|
-          queue = job["queue"]
-          next if queue.nil? || queue.empty?
-
-          counts[queue] += 1
-        end
-      end
-
-      def publish_segmented_counts(metric, counts, known_queues)
-        (known_queues | counts.keys).each do |queue|
-          metric.set({ queue: queue }, counts[queue])
-        end
-      end
-
-      def publish_job_set_size(metric, size:, segmented:, set:, known_queues:)
-        if segmented
-          publish_segmented_counts(metric, counts_by_queue(set.call), known_queues)
-        else
-          metric.set({}, size)
-        end
+      # Counts jobs in a Sidekiq job set (retry, dead, scheduled) per queue.
+      # Known queues without jobs in the set are reported as zero, so their series don't go stale.
+      def set_jobs_count_by_queue(metric, job_set, known_queues)
+        counts = job_set.each_with_object(Hash.new(0)) { |job, cntr| cntr[job["queue"]] += 1 }
+        (known_queues | counts.keys).each { |queue| metric.set({ queue: queue }, counts[queue]) }
       end
     end
 
