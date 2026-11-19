@@ -7,22 +7,31 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## 0.13.0 - 2026-11-19
+
 ### Added
 
-- `filter_queues_by_current_process` configuration setting to collect per-queue cluster metrics only for queues the current Sidekiq process works on.
+- `buckets` configuration setting to customize buckets of `sidekiq_job_latency` and `sidekiq_job_runtime` histograms.
 
-  Applies to queue sizes, queue latencies, and retry/dead/scheduled counts when they are segmented by queue. Queues of all capsules are considered (Sidekiq 7+), and Sidekiq 5 and 6 are supported as well. Useful when running multiple Sidekiq processes with different queue assignments and you want each process to report only its own queues.
+  Pull request [#44](https://github.com/yabeda-rb/yabeda-sidekiq/pull/44) by [@CaseyDanger]
 
-  [@sobrinho]
+- `dead_segmented_by_queue` and `scheduled_segmented_by_queue` configuration settings to allow segmentation of dead and scheduled job counts by queue (like `retries_segmented_by_queue`).
 
-- Optional segmentation of dead and scheduled sets by queue, matching `retries_segmented_by_queue`.
+  When enabled, `queue` label is added to `sidekiq_jobs_dead_count` and `sidekiq_jobs_scheduled_count` metrics. They are disabled by default as they require to iterate over all jobs in dead or scheduled set and may be very slow if these sets are huge.
 
-  Set `dead_segmented_by_queue` or `scheduled_segmented_by_queue` to `true` to add a `queue` label to
-  `sidekiq_jobs_dead_count` / `sidekiq_jobs_scheduled_count`. Disabled by default because iterating
-  those sets can be slow when they are large.
+  Pull request [#43](https://github.com/yabeda-rb/yabeda-sidekiq/pull/43) by [@duaasajid94]
 
-- When a set is segmented by queue, gauges are also published as `0` for every known Sidekiq queue
-  so a queue that empties does not leave a stale series.
+- `filter_queues_by_current_process` configuration setting to collect per-queue cluster metrics only for queues that current Sidekiq process works on.
+
+  Applies to queue sizes, queue latencies, and retry/dead/scheduled job counts when they are segmented by queue. In Sidekiq 7+ queues of all capsules are taken into account. Useful when running multiple Sidekiq processes with different queue assignments and you want each process to report only its own queues. Do not enable in separate metric exporter processes.
+
+  Pull request [#41](https://github.com/yabeda-rb/yabeda-sidekiq/pull/41) by [@sobrinho]
+
+### Changed
+
+- When retry, dead, or scheduled job counts are segmented by queue, gauges are now published for every known Sidekiq queue (reporting `0` for queues without jobs in the set), so a queue that has been emptied doesn't leave a stale series.
+
+  Pull request [#43](https://github.com/yabeda-rb/yabeda-sidekiq/pull/43) by [@duaasajid94]
 
 ## 0.12.0 - 2024-03-08
 
@@ -163,3 +172,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 [@SxDx]: https://github.com/SxDx "René Koller"
 [@niborg]: https://github.com/niborg "Nick Knipe"
 [@sobrinho]: https://github.com/sobrinho "Gabriel Sobrinho"
+[@CaseyDanger]: https://github.com/CaseyDanger "CaseyDanger"
+[@duaasajid94]: https://github.com/duaasajid94 "duaasajid94"
