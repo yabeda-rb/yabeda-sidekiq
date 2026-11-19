@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- `filter_queues_by_current_process` configuration setting to collect queue latency only for queues configured in the current Sidekiq process.
+- `filter_queues_by_current_process` configuration setting to collect per-queue cluster metrics only for queues the current Sidekiq process works on.
 
-  When enabled, uses `Sidekiq.default_configuration.queues` to determine which queues the process listens to, skipping all others. Useful when running multiple Sidekiq processes with different queue assignments and you want each process to report only its own queue latencies.
+  Applies to queue sizes, queue latencies, and retry/dead/scheduled counts when they are segmented by queue. Queues of all capsules are considered (Sidekiq 7+), and Sidekiq 5 and 6 are supported as well. Useful when running multiple Sidekiq processes with different queue assignments and you want each process to report only its own queues.
 
   [@sobrinho]
 

@@ -214,6 +214,10 @@ RSpec.describe Yabeda::Sidekiq do
   end
 
   describe "collection of Sidekiq statistics" do
+    def gauge_updates(gauge)
+      Yabeda::TestAdapter.instance.gauges.fetch(gauge)
+    end
+
     before do
       allow(Sidekiq::Stats).to receive(:new).and_return(
         OpenStruct.new(
@@ -248,25 +252,32 @@ RSpec.describe Yabeda::Sidekiq do
         old_value = described_class.config.filter_queues_by_current_process
         described_class.config.filter_queues_by_current_process = true
         example.run
+      ensure
         described_class.config.filter_queues_by_current_process = old_value
       end
 
       before do
-        allow(::Sidekiq.default_configuration).to receive(:queues).and_return(["default", "default"])
+        allow(described_class).to receive(:process_queue_names).and_return(%w[default critical])
+        allow(Sidekiq::Queue).to receive(:new) { |name| OpenStruct.new(name: name, latency: name == "default" ? 0.5 : 0) }
       end
 
-      it "only collects queue latency for queues used by the current process" do
+      it "collects queue sizes only for queues of the current process" do
+        expect { Yabeda.collect! }.to \
+          update_yabeda_gauge(Yabeda.sidekiq.jobs_waiting_count).with(
+            { queue: "default" } => 5,
+            { queue: "critical" } => 0,
+          )
+        expect(gauge_updates(Yabeda.sidekiq.jobs_waiting_count).keys).to contain_exactly({ queue: "default" }, { queue: "critical" })
+      end
+
+      it "collects queue latencies only for queues of the current process" do
         expect { Yabeda.collect! }.to \
           update_yabeda_gauge(Yabeda.sidekiq.queue_latency).with(
             { queue: "default" } => 0.5,
+            { queue: "critical" } => 0,
           )
-      end
-
-      it "does not collect queue latency for queues not in the current process" do
-        expect { Yabeda.collect! }.not_to \
-          update_yabeda_gauge(Yabeda.sidekiq.queue_latency).with(
-            { queue: "mailers" } => anything,
-          )
+        expect(gauge_updates(Yabeda.sidekiq.queue_latency).keys).to contain_exactly({ queue: "default" }, { queue: "critical" })
+        expect(Sidekiq::Queue).not_to have_received(:all)
       end
     end
 
@@ -352,6 +363,20 @@ RSpec.describe Yabeda::Sidekiq do
                 { queue: "mailers" } => 0,
               )
       end
+
+      it "publishes per-queue counts only for queues of the current process when filtering is enabled" do
+        described_class.config.filter_queues_by_current_process = true
+        allow(described_class).to receive(:process_queue_names).and_return(%w[default critical])
+        allow(Sidekiq::Queue).to receive(:new) { |name| OpenStruct.new(name: name, latency: 0) }
+
+        Yabeda.collect!
+
+        expect(gauge_updates(Yabeda.sidekiq.jobs_retry_count)).to eq({ queue: "default" } => 2, { queue: "critical" } => 0)
+        expect(gauge_updates(Yabeda.sidekiq.jobs_dead_count)).to eq({ queue: "default" } => 0, { queue: "critical" } => 0)
+        expect(gauge_updates(Yabeda.sidekiq.jobs_scheduled_count)).to eq({ queue: "default" } => 1, { queue: "critical" } => 0)
+      ensure
+        described_class.config.filter_queues_by_current_process = false
+      end
     end
 
     it "measures maximum runtime of currently running jobs", sidekiq: :inline do
@@ -404,6 +429,32 @@ RSpec.describe Yabeda::Sidekiq do
     ::Sidekiq.configure_server do |config|
       config.client_middleware do |chain|
         chain.remove ReRouteJobsMiddleware
+      end
+    end
+  end
+
+  describe ".process_queue_names" do
+    if Sidekiq.respond_to?(:default_configuration)
+      it "returns unique queues of all capsules" do
+        allow(Sidekiq.default_configuration).to receive(:capsules).and_return(
+          "default" => instance_double(Sidekiq::Capsule, queues: %w[critical critical default]),
+          "single" => instance_double(Sidekiq::Capsule, queues: %w[single default]),
+        )
+
+        expect(described_class.process_queue_names).to eq(%w[critical default single])
+      end
+    elsif Sidekiq.respond_to?(:[])
+      it "returns unique configured queues (Sidekiq 6.5)" do
+        allow(Sidekiq).to receive(:[]).and_call_original
+        allow(Sidekiq).to receive(:[]).with(:queues).and_return(%w[critical critical default])
+
+        expect(described_class.process_queue_names).to eq(%w[critical default])
+      end
+    else
+      it "returns unique configured queues (Sidekiq 5.x – 6.4)" do
+        allow(Sidekiq).to receive(:options).and_return(queues: %w[critical critical default])
+
+        expect(described_class.process_queue_names).to eq(%w[critical default])
       end
     end
   end
