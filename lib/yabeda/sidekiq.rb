@@ -67,7 +67,9 @@ module Yabeda
         next unless config.collect_cluster_metrics
 
         stats = ::Sidekiq::Stats.new
+        process_queues = Yabeda::Sidekiq.process_queue_names if config.filter_queues_by_current_process
         queue_sizes = stats.queues
+        queue_sizes = process_queues.to_h { |name| [name, queue_sizes.fetch(name, 0)] } if process_queues
 
         queue_sizes.each do |k, v|
           sidekiq_jobs_waiting_count.set({ queue: k }, v)
@@ -75,7 +77,8 @@ module Yabeda
         sidekiq_active_workers_count.set({}, stats.workers_size)
         sidekiq_active_processes.set({}, stats.processes_size)
 
-        ::Sidekiq::Queue.all.each do |queue|
+        queues = process_queues ? process_queues.map { |name| ::Sidekiq::Queue.new(name) } : ::Sidekiq::Queue.all
+        queues.each do |queue|
           sidekiq_queue_latency.set({ queue: queue.name }, queue.latency)
         end
 
@@ -146,9 +149,24 @@ module Yabeda
 
       # Counts jobs in a Sidekiq job set (retry, dead, scheduled) per queue.
       # Known queues without jobs in the set are reported as zero, so their series don't go stale.
+      # Queues present only in the set (e.g. removed ones) are reported too, unless filtering by current process.
       def set_jobs_count_by_queue(metric, job_set, known_queues)
         counts = job_set.each_with_object(Hash.new(0)) { |job, cntr| cntr[job["queue"]] += 1 }
-        (known_queues | counts.keys).each { |queue| metric.set({ queue: queue }, counts[queue]) }
+        queues = config.filter_queues_by_current_process ? known_queues : known_queues | counts.keys
+        queues.each { |queue| metric.set({ queue: queue }, counts[queue]) }
+      end
+
+      # Names of queues the current process is configured to work on (across all capsules).
+      def process_queue_names
+        queues =
+          if ::Sidekiq.respond_to?(:default_configuration) # Sidekiq 7+
+            ::Sidekiq.default_configuration.capsules.values.flat_map(&:queues)
+          elsif ::Sidekiq.respond_to?(:[]) # Sidekiq 6.5+
+            ::Sidekiq[:queues]
+          else # Sidekiq 5.x – 6.4
+            ::Sidekiq.options[:queues]
+          end
+        queues.uniq # weighted queues are listed multiple times
       end
     end
 

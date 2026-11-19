@@ -106,11 +106,16 @@ Configuration is handled by [anyway_config] gem. With it you can load settings f
 | `retries_segmented_by_queue`                   | boolean | Disabled                                                | Defines whether retries are segmented by queue or reported as a single metric. Iterates the retry set.                                             |
 | `dead_segmented_by_queue`                      | boolean | Disabled                                                | Defines whether dead jobs are segmented by queue or reported as a single metric. Iterates the dead set.                                            |
 | `scheduled_segmented_by_queue`                 | boolean | Disabled                                                | Defines whether scheduled jobs are segmented by queue or reported as a single metric. Iterates the scheduled set.                                  |
+| `filter_queues_by_current_process`             | boolean | Disabled                                                | Collect per-queue cluster metrics (queue sizes, latencies, segmented retry/dead/scheduled counts) only for queues this process works on (all capsules). |
 | `label_for_error_class_on_sidekiq_jobs_failed` | boolean | Disabled                                                | Defines whether `error` label should be added to `sidekiq_jobs_failed_total` metric.                                                               |
 | `buckets`                                      | array   | `[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60, 120, 300, 1800, 3600, 21600]` | Buckets for `sidekiq_job_latency` and `sidekiq_job_runtime` histograms (in seconds)                                                 |
 
 When any of the `*_segmented_by_queue` settings is enabled, that gauge is published for every known
 Sidekiq queue plus any queue still present in the set, so emptied queues report `0` instead of disappearing.
+
+When `filter_queues_by_current_process` is enabled, only queues the current Sidekiq process is configured to work on
+are reported (missing or empty ones as `0`). Note that in non-Sidekiq processes (e.g. a dedicated metrics exporter)
+this is Sidekiq's default queue list (usually just `default`). Non-segmented totals and process/worker counts stay cluster-wide.
 
 # Roadmap (TODO or Help wanted)
 
